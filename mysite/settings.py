@@ -82,9 +82,9 @@ WSGI_APPLICATION = 'mysite.wsgi.application'
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": "fortunebot",
-        "USER": "fortunebot_admin",
-        "PASSWORD": "hjtenhj2024",
+        "NAME": "fortune",
+        "USER": "fortune",
+        "PASSWORD": "951003QWERTY",
         "HOST": "localhost",
         "PORT": "5432",
     }
