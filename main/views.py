@@ -33,11 +33,11 @@ class Tap_Tap(APIView):
     def post(self, request):
         player = get_object_or_404(Player, tg_id=request.data['tg_id'])
         coin = int(self.request.data['coin'])
-        energy = int(self.request.data['energy'])
+        energy = int(self.request.data['energy_now'])
         player.coin += coin
         player.now_energy = energy
         player.save(update_fields=['now_energy', 'coin'])
-        return Response({"coin": player.coin, "energy": player.now_energy}, status=status.HTTP_200_OK)
+        return Response({"coin": player.coin, "energy_now": player.now_energy}, status=status.HTTP_200_OK)
 
 
 class Autobot(APIView):
@@ -59,7 +59,7 @@ class Take_Bonus_Autobot(APIView):
             player.upgrade.autobot_time = player.upgrade.start_autobot_time
             player.save()
             player.upgrade.save()
-            return Response({"Success": f"Деньги добавлены"}, status=status.HTTP_200_OK)
+            return Response({"Success": "Деньги добавлены"}, status=status.HTTP_200_OK)
         else:
             return Response({"Error": "Нечего забирать"}, status=status.HTTP_425_TOO_EARLY)
 
@@ -106,6 +106,7 @@ class UpgradeDamage(APIView):
             player.save()
             player.upgrade.save()
             return Response({"coin": player.coin,
+                             "damage":player.upgrade.damage,
                              "one_tap_energy": player.upgrade.one_tap_energy,
                              "lvl_one_tap_damage_and_energy": player.upgrade.lvl_one_tap_damage_and_energy,
                              "price_lvl_up_damage_and_energy": player.upgrade.price_lvl_up_damage_and_energy},
