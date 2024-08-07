@@ -6,17 +6,20 @@ class Player(models.Model):
     name = models.CharField(max_length=50)
     lvl = models.IntegerField(default=1)
     energy = models.IntegerField(default=1000)
+    now_energy = models.IntegerField(default=1000)
     coin = models.PositiveBigIntegerField(default=0)
     crystal = models.PositiveBigIntegerField(default=0)
 
     def __str__(self):
-        return f"name:{self.name}, tg_id:{self.tg_id}, lvl:{self.lvl}, coins:{self.coin}"
+        return f"name:{self.name}, tg_id:{self.tg_id}, lvl:{self.lvl}, coins:{self.coin}, id:{self.pk}"
 
 
 class Upgrade(models.Model):
+    coin_bonus_result = models.IntegerField(default=0)
     player = models.OneToOneField(Player, on_delete=models.CASCADE, related_name='upgrade')
     energy_lvl = models.IntegerField(default=1)
     price_lvl_up_energy = models.PositiveBigIntegerField(default=1000)
+    start_autobot_time = models.PositiveBigIntegerField(default=300)
     autobot_time = models.PositiveBigIntegerField(default=300)
     autobot_lvl = models.IntegerField(default=1)
     flag_autobot = models.BooleanField(default=True)
@@ -40,7 +43,7 @@ class Box(models.Model):
 class Prize(models.Model):
     name = models.CharField(max_length=50)
     count = models.IntegerField(default=1)
-    chance = models.IntegerField(default=1)
+    chance = models.FloatField(default=1)
 
     def __str__(self):
         return f"name:{self.name}, count:{self.count}, chens:{self.chance}"
@@ -54,4 +57,3 @@ class ReferralSystem(models.Model):
 
     def __str__(self):
         return f"me:{self.referral.name}___new_player:{self.new_player.name}"
-

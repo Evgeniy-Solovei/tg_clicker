@@ -7,10 +7,12 @@ urlpatterns = [
     path('main_info/<int:tg_id>/<str:name>/', Main_info.as_view(), name='main_info'),
     path('tap_tap/', Tap_Tap.as_view(), name='tap-tap'),
     path('autobot/', Autobot.as_view(), name='tap-tap'),
+    path('takin_bonus_autobot/', Take_Bonus_Autobot.as_view()),
     path('info_upgrade/<int:tg_id>/', Info_Upgrade.as_view(), name='info_upgrade'),
     path('UpgradeEnergy/', UpgradeEnergy.as_view(), name='UpgradeEnergy'),
     path('UpgradeDamage/', UpgradeDamage.as_view(), name='UpgradeDamage'),
     path('get_all_box/', Get_All_Box.as_view(), name='get_all_box'),
     path('open_box/', Open_Box.as_view(), name='open_box'),
+    path('take_and_apply_bonus/',Take_And_Apply_Bonus.as_view()),
 
 ]
