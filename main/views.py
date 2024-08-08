@@ -5,6 +5,7 @@ from rest_framework.views import APIView
 from .models import *
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
+import logging
 
 
 class Main_info(APIView):
@@ -106,7 +107,7 @@ class UpgradeDamage(APIView):
             player.save()
             player.upgrade.save()
             return Response({"coin": player.coin,
-                             "damage":player.upgrade.damage,
+                             "damage": player.upgrade.damage,
                              "one_tap_energy": player.upgrade.one_tap_energy,
                              "lvl_one_tap_damage_and_energy": player.upgrade.lvl_one_tap_damage_and_energy,
                              "price_lvl_up_damage_and_energy": player.upgrade.price_lvl_up_damage_and_energy},
@@ -191,3 +192,74 @@ class Take_And_Apply_Bonus(APIView):
         player.save()
         player.upgrade.save()
         return Response({'Success': 'Бонусы получены '})
+
+
+class CompleteReferralSystem(APIView):
+    def get(self, request, new_id: int, referral_id: int):
+        if new_id == referral_id:
+            return Response({"Error": "Нельзя добавить самого себя в друзья!"}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            new_person = get_object_or_404(Player, tg_id=new_id)
+            referral = get_object_or_404(Player, tg_id=referral_id)
+
+            info1_exists = ReferralSystem.objects.filter(referral=referral, new_person=new_person).exists()
+            info2_exists = ReferralSystem.objects.filter(referral=new_person, new_person=referral).exists()
+
+            if info1_exists or info2_exists:
+                return Response({"Error": "Данной игрок уже находится у вас в друзьях"},
+                                status=status.HTTP_400_BAD_REQUEST)
+            else:
+                ReferralSystem.objects.create(referral=referral, new_person=new_person)
+                return Response({'success': 'Перейдите во кладку друзья и заберите бонус'}, status=status.HTTP_200_OK)
+
+
+class AllFriends(APIView):
+    def get(self, request, tg_id: int):
+        person = get_object_or_404(Player, tg_id=tg_id)
+        data = []
+        info = ReferralSystem.objects.filter(referral=person)
+        if info:
+            for i in info:
+                data.append({'name': i.new_person.name,
+                             'lvl': i.new_person.lvl,
+                             'player_id': i.new_person.id,
+                             'referral_system_id': i.id,
+                             'flag': i.new_person_bonus})
+
+        info = ReferralSystem.objects.filter(new_person=person)
+        if info:
+            for i in info:
+                data.append({'name': i.referral.name,
+                             'lvl': i.referral.lvl,
+                             'player_id': i.referral.id,
+                             'referral_system_id': i.id,
+                             'flag': i.referral_bonus})
+        return Response(data, status=status.HTTP_200_OK)
+
+
+class TakinReferralBonus(APIView):
+    def post(self, request):
+        person = get_object_or_404(Player, tg_id=request.data['tg_id'])
+        system = get_object_or_404(ReferralSystem, id=request.data['referral_system_id'])
+        if system.referral == person and system.referral_bonus == True:
+            system.referral_bonus = False
+            system.save()
+            return Response({
+                'name_box': 'Silver'})
+        if system.new_person == person and system.new_person_bonus == True:
+            system.new_person_bonus = False
+            system.save()
+            return Response({'name_box': 'Bronze'})
+        else:
+            return Response({'Error': "Вы уже получали бонус"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class GenerateRefLinkView(APIView):
+    def get(self, request, tg_id: int):
+        try:
+            create_link = f"https://t.me/FortuneMonster_bot?start=id_{tg_id}"
+        except Exception as e:
+            logging.error(f"Error generating referral link: {e}")
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response({'ref_link': create_link}, status=status.HTTP_200_OK)

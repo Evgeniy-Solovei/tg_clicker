@@ -13,6 +13,10 @@ urlpatterns = [
     path('UpgradeDamage/', UpgradeDamage.as_view(), name='UpgradeDamage'),
     path('get_all_box/', Get_All_Box.as_view(), name='get_all_box'),
     path('open_box/', Open_Box.as_view(), name='open_box'),
-    path('take_and_apply_bonus/',Take_And_Apply_Bonus.as_view()),
+    path('take_and_apply_bonus/', Take_And_Apply_Bonus.as_view()),
+    path('completeReferral/<int:new_id>/<int:referral_id>/', CompleteReferralSystem.as_view()),
+    path('all_friends/<int:tg_id>/', AllFriends.as_view(), name='all_friends'),
+    path('taking_referral_bonus/', TakinReferralBonus.as_view(), name='takin_bonus'),
+    path('generate_link/<int:tg_id>/', GenerateRefLinkView.as_view(), name='generate_link'),
 
 ]
