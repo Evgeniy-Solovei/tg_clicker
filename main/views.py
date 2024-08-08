@@ -98,7 +98,7 @@ class UpgradeEnergy(APIView):
 class UpgradeDamage(APIView):
     def post(self, request):
         player = get_object_or_404(Player, tg_id=self.request.data['tg_id'])
-        if player.coin >= player.upgrade.price_lvl_up_energy:
+        if player.coin >= player.upgrade.price_lvl_up_damage_and_energy:
             player.coin -= player.upgrade.price_lvl_up_damage_and_energy
             player.upgrade.damage += 1
             player.upgrade.one_tap_energy += 1
