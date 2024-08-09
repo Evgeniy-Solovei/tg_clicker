@@ -1,1 +1,0 @@
-import{j as i}from"./index-BYeNUyWm.js";import{D as n}from"./Dialog-ApGtkE_X.js";import{i as r}from"./svgEnot-DHlCBpT_.js";const s="_container_1iq9u_1",t={container:s};function e(){return i.jsxs(n,{children:[" ",i.jsxs("div",{className:t.container,children:[i.jsx("p",{children:"LIGA"}),i.jsx("img",{src:r})]})]})}export{e as default};

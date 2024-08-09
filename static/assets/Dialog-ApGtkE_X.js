@@ -1,1 +1,0 @@
-import{j as n}from"./index-BYeNUyWm.js";const e="_container_1whk6_1",c="_container_underlay_1whk6_12",a="_box_content_1whk6_20",t={container:e,container_underlay:c,box_content:a};function s({children:o}){return n.jsx("div",{className:t.container,children:n.jsx("div",{className:t.container_underlay,children:n.jsx("div",{className:t.box_content,children:o})})})}export{s as D};
