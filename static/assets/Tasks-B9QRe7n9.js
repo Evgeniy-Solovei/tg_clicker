@@ -1,1 +1,0 @@
-import{j as s}from"./index-BPTOnH0W.js";import{i}from"./svgEnot-DHlCBpT_.js";import{D as n}from"./Dialog-CTu58RMk.js";const r="_container_1iq9u_1",o={container:r};function c(){return s.jsxs(n,{children:[" ",s.jsxs("div",{className:o.container,children:[s.jsx("p",{children:"TASKS"}),s.jsx("img",{src:i})]})]})}export{c as default};
