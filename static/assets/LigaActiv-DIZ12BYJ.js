@@ -1,0 +1,1 @@
+import{j as i,D as n}from"./index-SuUnUfEU.js";import{i as s}from"./svgEnot-DHlCBpT_.js";const t="_container_1iq9u_1",r={container:t};function c(){return i.jsxs(n,{children:[" ",i.jsxs("div",{className:r.container,children:[i.jsx("p",{children:"LIGA"}),i.jsx("img",{src:s})]})]})}export{c as default};
