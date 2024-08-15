@@ -11,7 +11,7 @@ urlpatterns = [
     path('info_upgrade/<int:tg_id>/', Info_Upgrade.as_view(), name='info_upgrade'),
     path('UpgradeEnergy/', UpgradeEnergy.as_view(), name='UpgradeEnergy'),
     path('UpgradeDamage/', UpgradeDamage.as_view(), name='UpgradeDamage'),
-    path('get_all_box/', Get_All_Box.as_view(), name='get_all_box'),
+    path('get_all_box/<int:tg_id>/', Get_All_Box.as_view(), name='get_all_box'),
     path('open_box/', Open_Box.as_view(), name='open_box'),
     path('take_and_apply_bonus/', Take_And_Apply_Bonus.as_view()),
     path('completeReferral/<int:new_id>/<int:referral_id>/', CompleteReferralSystem.as_view()),

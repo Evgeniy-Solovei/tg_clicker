@@ -15,6 +15,7 @@ class Main_info(APIView):
         except Player.DoesNotExist:
             player = Player.objects.create(tg_id=tg_id, name=name)
             Upgrade.objects.create(player=player)
+            boxs = Box.objects.create()
 
         info = {"lvl": player.lvl,
                 "coin": player.coin,
@@ -43,7 +44,7 @@ class Tap_Tap(APIView):
 
 class Autobot(APIView):
     def post(self, request):
-        player = get_object_or_404(Player, tg_id=self.request.data['tg_id'])
+        player = get_object_or_404(Player, tg_id=request.data['tg_id'])
         upgrade = get_object_or_404(Upgrade, player=player)
         upgrade.flag_autobot = False
         upgrade.save(update_fields=['flag_autobot'])
@@ -118,12 +119,20 @@ class UpgradeDamage(APIView):
 
 
 class Get_All_Box(APIView):
-    def get(self, request):
+    def get(self, request, tg_id: int):
         boxes = Box.objects.all()
+        player = get_object_or_404(Player, tg_id=tg_id)
         response_data = []
         for box in boxes:
+            if box.name == 'Bronze':
+                price = player.price_bronze_case
+            elif box.name == 'Silver':
+                price = player.price_silver_case
+            elif box.name == 'Gold':
+                price = player.price_gold_case
             box_data = {
                 'name': box.name,
+                'price': price,
                 'prizes': []
             }
             for prize in box.prizes.all():
@@ -134,16 +143,47 @@ class Get_All_Box(APIView):
                 }
                 box_data['prizes'].append(prize_data)
             response_data.append(box_data)
+            sort_order = {'Bronze': 0, 'Silver': 1, 'Gold': 2}
+            response_data = sorted(response_data, key=lambda x: sort_order[x['name']])
         return Response(response_data)
 
 
 class Open_Box(APIView):
     def post(self, request):
+        player = get_object_or_404(Player, tg_id=request.data['tg_id'])
         name = request.data['name_box']
         box = get_object_or_404(Box, name=name)
-        prize_count = {'Bronze': 1, 'Silver': 2, 'Gold': 3}.get(name, 0)
-        prizes = box.prizes.all()
         result = []
+        prize_count = {'Bronze': 1, 'Silver': 2, 'Gold': 3}.get(name, 0)
+        if box.name == 'Bronze':
+            if player.coin >= player.price_bronze_case:
+                player.coin -= player.price_bronze_case
+                player.price_bronze_case *= 1.35
+                prizes = box.prizes.all()
+
+            else:
+                return Response({'Error': 'Недостаточно средств'}, status=status.HTTP_400_BAD_REQUEST)
+
+        elif box.name == 'Silver':
+            if player.coin >= player.price_silver_case:
+                player.coin -= player.price_silver_case
+                player.price_silver_case *= 1.35
+                prizes = box.prizes.all()
+
+            else:
+                return Response({'Error': 'Недостаточно средств'}, status=status.HTTP_400_BAD_REQUEST)
+
+        elif box.name == 'Gold':
+            if player.coin >= player.price_gold_case:
+                player.coin -= player.price_gold_case
+                player.price_gold_case *= 1.55
+                prizes = box.prizes.all()
+
+            else:
+                return Response({'Error': 'Недостаточно средств'}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({'Error': 'Неправильные переданы даныне'}, status=status.HTTP_400_BAD_REQUEST)
+
         for _ in range(prize_count):
             rand = random.uniform(0, 100)
             summ_chance = 0
@@ -156,7 +196,7 @@ class Open_Box(APIView):
                         'prize_chance': prize.chance
                     })
                     break
-
+        player.save()
         return Response(result)
 
 
@@ -199,17 +239,17 @@ class CompleteReferralSystem(APIView):
         if new_id == referral_id:
             return Response({"Error": "Нельзя добавить самого себя в друзья!"}, status=status.HTTP_400_BAD_REQUEST)
         else:
-            new_person = get_object_or_404(Player, tg_id=new_id)
+            new_player = get_object_or_404(Player, tg_id=new_id)
             referral = get_object_or_404(Player, tg_id=referral_id)
 
-            info1_exists = ReferralSystem.objects.filter(referral=referral, new_person=new_person).exists()
-            info2_exists = ReferralSystem.objects.filter(referral=new_person, new_person=referral).exists()
+            info1_exists = ReferralSystem.objects.filter(referral=referral, new_player=new_player).exists()
+            info2_exists = ReferralSystem.objects.filter(referral=new_player, new_player=referral).exists()
 
             if info1_exists or info2_exists:
                 return Response({"Error": "Данной игрок уже находится у вас в друзьях"},
                                 status=status.HTTP_400_BAD_REQUEST)
             else:
-                ReferralSystem.objects.create(referral=referral, new_person=new_person)
+                ReferralSystem.objects.create(referral=referral, new_player=new_player)
                 return Response({'success': 'Перейдите во кладку друзья и заберите бонус'}, status=status.HTTP_200_OK)
 
 
@@ -217,23 +257,32 @@ class AllFriends(APIView):
     def get(self, request, tg_id: int):
         person = get_object_or_404(Player, tg_id=tg_id)
         data = []
-        info = ReferralSystem.objects.filter(referral=person)
-        if info:
-            for i in info:
-                data.append({'name': i.new_person.name,
-                             'lvl': i.new_person.lvl,
-                             'player_id': i.new_person.id,
-                             'referral_system_id': i.id,
-                             'flag': i.new_person_bonus})
 
-        info = ReferralSystem.objects.filter(new_person=person)
-        if info:
-            for i in info:
-                data.append({'name': i.referral.name,
-                             'lvl': i.referral.lvl,
-                             'player_id': i.referral.id,
-                             'referral_system_id': i.id,
-                             'flag': i.referral_bonus})
+        # Получаем информацию о друзьях, которых пригласил этот человек
+        referral_info = ReferralSystem.objects.filter(referral=person).select_related('new_player')
+        for i in referral_info:
+            data.append({
+                'name': i.new_player.name,
+                'lvl': i.new_player.lvl,
+                'player_id': i.new_player.id,
+                'referral_system_id': i.id,
+                'flag': i.new_player_bonus
+            })
+
+        # Получаем информацию о том, кто пригласил этого человека
+        invited_info = ReferralSystem.objects.filter(new_player=person).select_related('referral')
+        for i in invited_info:
+            data.append({
+                'name': i.referral.name,
+                'lvl': i.referral.lvl,
+                'player_id': i.referral.id,
+                'referral_system_id': i.id,
+                'flag': i.referral_bonus
+            })
+
+        if not data:
+            return Response({"Error": "У Вас ещё нет друзей"}, status=status.HTTP_404_NOT_FOUND)
+
         return Response(data, status=status.HTTP_200_OK)
 
 
@@ -246,8 +295,8 @@ class TakinReferralBonus(APIView):
             system.save()
             return Response({
                 'name_box': 'Silver'})
-        if system.new_person == person and system.new_person_bonus == True:
-            system.new_person_bonus = False
+        if system.new_player == person and system.new_player_bonus == True:
+            system.new_player_bonus = False
             system.save()
             return Response({'name_box': 'Bronze'})
         else:

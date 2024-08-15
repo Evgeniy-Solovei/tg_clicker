@@ -53,7 +53,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-CORS_ALLOWED_ORIGINS = ["http://45.131.41.151", "http://172.0.0.1", ]
+CORS_ALLOWED_ORIGINS = ["http://45.131.41.151", "http://172.0.0.1", 'https://fortunebot.monster', 'https://www.fortunebot.monster' ]
 ROOT_URLCONF = 'mysite.urls'
 
 TEMPLATES = [
