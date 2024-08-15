@@ -30,9 +30,8 @@ def flag_autobot_task(instance_id):
             instance.flag_autobot = True
             instance.save()
             cache.delete(task_id)
-            print('удаляем в if')
         instance.save()
         flag_autobot_task.apply_async((instance.id,), countdown=2)
     else:
         cache.delete(task_id)
-        print('удаляем в else')
+
