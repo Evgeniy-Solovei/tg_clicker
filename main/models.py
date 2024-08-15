@@ -9,6 +9,9 @@ class Player(models.Model):
     now_energy = models.IntegerField(default=1000)
     coin = models.PositiveBigIntegerField(default=0)
     crystal = models.PositiveBigIntegerField(default=0)
+    price_bronze_case = models.PositiveBigIntegerField(default=10000)
+    price_silver_case = models.PositiveBigIntegerField(default=30000)
+    price_gold_case = models.PositiveBigIntegerField(default=100000)
 
     def __str__(self):
         return f"name:{self.name}, tg_id:{self.tg_id}, lvl:{self.lvl}, coins:{self.coin}, id:{self.pk}"
@@ -56,4 +59,4 @@ class ReferralSystem(models.Model):
     new_player_bonus = models.BooleanField(default=True)
 
     def __str__(self):
-        return f"me:{self.referral.name}___new_player:{self.new_player.name}"
+        return f"me:{self.referral.name}___new_player:{self.new_player.name}, id:{self.id}"

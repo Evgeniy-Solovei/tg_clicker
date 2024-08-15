@@ -24,11 +24,15 @@ def flag_autobot_task(instance_id):
     instance = Upgrade.objects.get(id=instance_id)
     task_id = f'energy_task_{instance_id}'
     if instance.autobot_time > 0:
-        instance.autobot_time -= 1
-        instance.coin_bonus_result += instance.damage
-        instance.save(update_fields=['coin_bonus_result','autobot_time'])
-        flag_autobot_task.apply_async((instance.id,), countdown=1)
+        instance.autobot_time -= 2
+        instance.coin_bonus_result = instance.coin_bonus_result + (instance.damage * 2)
+        if instance.autobot_time == 0:
+            instance.flag_autobot = True
+            instance.save()
+            cache.delete(task_id)
+            print('удаляем в if')
+        instance.save()
+        flag_autobot_task.apply_async((instance.id,), countdown=2)
     else:
-        instance.flag_autobot = True
-        instance.save(update_fields=['flag_autobot'])
         cache.delete(task_id)
+        print('удаляем в else')
