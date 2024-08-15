@@ -15,7 +15,6 @@ class Main_info(APIView):
         except Player.DoesNotExist:
             player = Player.objects.create(tg_id=tg_id, name=name)
             Upgrade.objects.create(player=player)
-            boxs = Box.objects.create()
 
         info = {"lvl": player.lvl,
                 "coin": player.coin,
