@@ -54,6 +54,7 @@ MIDDLEWARE = [
 ]
 
 CORS_ALLOWED_ORIGINS = ["http://45.131.41.151", "http://172.0.0.1", 'https://fortunebot.monster', 'https://www.fortunebot.monster' ]
+CSRF_TRUSTED_ORIGINS = ["https://45.131.41.151", "http://172.0.0.1", "https://fortunebot.monster", "https://www.fortunebot.monster"]
 ROOT_URLCONF = 'mysite.urls'
 
 TEMPLATES = [
@@ -83,6 +84,8 @@ DATABASES = {
         "NAME": "fortune",
         "USER": "fortune",
         "PASSWORD": "951003QWERTY",
+        # "USER": "postgres",
+        # "PASSWORD": "Selsel375298945462",
         "HOST": "localhost",
         "PORT": "5432",
     }

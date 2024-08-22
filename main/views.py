@@ -1,11 +1,14 @@
 import random
+
+from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
 from .models import *
 from django.shortcuts import get_object_or_404
-from django.http import JsonResponse
 import logging
+
+from .serializers import LeaguesSerializer
 
 
 class Main_info(APIView):
@@ -15,7 +18,6 @@ class Main_info(APIView):
         except Player.DoesNotExist:
             player = Player.objects.create(tg_id=tg_id, name=name)
             Upgrade.objects.create(player=player)
-            boxs = Box.objects.create()
 
         info = {"lvl": player.lvl,
                 "coin": player.coin,
@@ -26,7 +28,9 @@ class Main_info(APIView):
                 "timer_autobot": player.upgrade.autobot_time,
                 "money_per_tap": player.upgrade.damage,
                 "energy_per_tap": player.upgrade.one_tap_energy,
-                "coin_bonus_result": player.upgrade.coin_bonus_result}
+                "coin_bonus_result": player.upgrade.coin_bonus_result,
+                "league": player.league.name if player.league else None,
+                }
 
         return Response(info, status=status.HTTP_200_OK)
 
@@ -154,7 +158,7 @@ class Open_Box(APIView):
         name = request.data['name_box']
         box = get_object_or_404(Box, name=name)
         result = []
-        prize_count = {'Bronze': 1, 'Silver': 2, 'Gold': 3}.get(name, 0)
+        prize_count = {'Bronze': 1, 'Silver': 2, 'Gold': 3, 'Bronze_free': 1, 'Silver_free': 2}.get(name, 0)
         if box.name == 'Bronze':
             if player.coin >= player.price_bronze_case:
                 player.coin -= player.price_bronze_case
@@ -181,6 +185,12 @@ class Open_Box(APIView):
 
             else:
                 return Response({'Error': 'Недостаточно средств'}, status=status.HTTP_400_BAD_REQUEST)
+        elif box.name == 'Bronze_free':
+            prizes = box.prizes.all()
+            return Response(status=status.HTTP_200_OK)
+        elif box.name == 'Silver_free':
+            prizes = box.prizes.all()
+            return Response(status=status.HTTP_200_OK)
         else:
             return Response({'Error': 'Неправильные переданы даныне'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -294,11 +304,11 @@ class TakinReferralBonus(APIView):
             system.referral_bonus = False
             system.save()
             return Response({
-                'name_box': 'Silver'})
+                'name_box': 'Silver_free'})
         if system.new_player == person and system.new_player_bonus == True:
             system.new_player_bonus = False
             system.save()
-            return Response({'name_box': 'Bronze'})
+            return Response({'name_box': 'Bronze_free'})
         else:
             return Response({'Error': "Вы уже получали бонус"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -312,3 +322,9 @@ class GenerateRefLinkView(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response({'ref_link': create_link}, status=status.HTTP_200_OK)
+
+
+class LeagueListView(ListAPIView):
+    queryset = League.objects.all()
+    serializer_class = LeaguesSerializer
+
