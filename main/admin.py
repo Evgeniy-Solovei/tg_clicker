@@ -25,3 +25,8 @@ class PrizeAdmin(admin.ModelAdmin):
 @admin.register(ReferralSystem)
 class ReferralSystemAdmin(admin.ModelAdmin):
     pass
+
+
+@admin.register(League)
+class LeagueAdmin(admin.ModelAdmin):
+    pass

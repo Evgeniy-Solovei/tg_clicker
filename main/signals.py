@@ -1,8 +1,8 @@
 from django.core.cache import cache
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from .models import *
-from .tasks import energy_task, flag_autobot_task
+from .tasks import energy_task, flag_autobot_task, update_league_task
 import logging
 
 logger = logging.getLogger(__name__)
@@ -35,3 +35,24 @@ def my_changed_flag_autobot(sender, instance, created, **kwargs):
             print('I HAVE CACHE!')
             cache.delete(task_id)
             instance.save(update_fields=['flag_autobot'])
+
+
+# @receiver(pre_save, sender=Player)
+# def set_default_league(sender, instance, **kwargs):
+#     """Задаём дефолтное значение лиги при создании нового игрока."""
+#     if not instance.league:
+#         # Находим деревянную лигу с минимальным количеством монет 1000
+#         default_league = League.objects.filter(min_coin=1000).first()
+#         if default_league:
+#             instance.league = default_league
+#
+#
+# @receiver(post_save, sender=Player)
+# def update_league(sender, instance, **kwargs):
+#     """Сигнал об изменении монет"""
+#     update_fields = kwargs.get('update_fields')
+#     print(update_fields)
+#     if update_fields and 'coin' in update_fields:
+#         print(f"Юзер айди: {instance.id}")
+#         update_league_task.apply_async((instance.id,))
+#
