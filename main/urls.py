@@ -18,5 +18,5 @@ urlpatterns = [
     path('all_friends/<int:tg_id>/', AllFriends.as_view(), name='all_friends'),
     path('taking_referral_bonus/', TakinReferralBonus.as_view(), name='takin_bonus'),
     path('generate_link/<int:tg_id>/', GenerateRefLinkView.as_view(), name='generate_link'),
-
+    path('all_leagues/', LeagueListView.as_view(), name='league-list'),
 ]

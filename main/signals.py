@@ -2,7 +2,7 @@ from django.core.cache import cache
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from .models import *
-from .tasks import energy_task, flag_autobot_task, update_league_task
+from .tasks import energy_task, flag_autobot_task
 import logging
 
 logger = logging.getLogger(__name__)
@@ -55,4 +55,3 @@ def my_changed_flag_autobot(sender, instance, created, **kwargs):
 #     if update_fields and 'coin' in update_fields:
 #         print(f"Юзер айди: {instance.id}")
 #         update_league_task.apply_async((instance.id,))
-#

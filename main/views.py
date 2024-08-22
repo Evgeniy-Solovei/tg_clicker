@@ -1,10 +1,14 @@
 import random
+
+from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
 from .models import *
 from django.shortcuts import get_object_or_404
 import logging
+
+from .serializers import LeaguesSerializer
 
 
 class Main_info(APIView):
@@ -318,3 +322,9 @@ class GenerateRefLinkView(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response({'ref_link': create_link}, status=status.HTTP_200_OK)
+
+
+class LeagueListView(ListAPIView):
+    queryset = League.objects.all()
+    serializer_class = LeaguesSerializer
+

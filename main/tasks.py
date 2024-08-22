@@ -88,4 +88,3 @@ def flag_autobot_task(instance_id):
 #             update_league_task.apply_async((instance.id,), countdown=1)
 #         else:
 #             cache.delete(task_id)
-
