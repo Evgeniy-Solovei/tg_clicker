@@ -1,0 +1,1 @@
+import{j as n,D as s}from"./index-DJC1mpEg.js";import{i}from"./svgEnot-DHlCBpT_.js";const r="_container_1iq9u_1",t={container:r};function a(){return n.jsxs(s,{children:[" ",n.jsxs("div",{className:t.container,children:[n.jsx("p",{children:"SKINS"}),n.jsx("img",{src:i})]})]})}export{a as default};
