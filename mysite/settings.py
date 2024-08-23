@@ -145,8 +145,8 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'  # LHOST
-# CELERY_BROKER_URL = 'redis://127.0.0.1:16379/0'
+# CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'  # LHOST
+CELERY_BROKER_URL = 'redis://127.0.0.1:16379/0'
 CELERY_RESULT_BACKEND = 'django-db'
 CELERY_IMPORTS = ('main.tasks',)
 broker_connection_retry_on_startup = True
@@ -155,8 +155,8 @@ CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        # "LOCATION": "redis://127.0.0.1:16379/1",
-        "LOCATION": "redis://127.0.0.1:6379/1",  # LHOST
+        "LOCATION": "redis://127.0.0.1:16379/1",
+        # "LOCATION": "redis://127.0.0.1:6379/1",  # LHOST
     }
 }
 CELERY_CACHE_BACKEND = 'django-cache'
