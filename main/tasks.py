@@ -36,55 +36,26 @@ def flag_autobot_task(instance_id):
         cache.delete(task_id)
 
 
-# @shared_task
-# def update_league_task(instance_id):
-#     """Задача для автоматического изменения лиги пользователей"""
-#     print(222222)
-#     instance = Player.objects.get(id=instance_id)
-#     leagues = League.objects.order_by('min_coin')
-#     # Находим индекс текущей лиги пользователя
-#     current_league_index = None
-#     for index, league in enumerate(leagues):
-#         if instance.league == league:
-#             current_league_index = index
-#             break
-#
-#     # Если текущая лига не найдена, начинаем с самой низшей лиги
-#     if current_league_index is None:
-#         current_league_index = 0
-#
-#     # Проверяем лиги, начиная с текущей и выше
-#     for league in leagues[current_league_index:]:
-#         if instance.coin >= league.min_coin:
-#             instance.league = league
-#         else:
-#             break
-#
-#     instance.save()
+@shared_task
+def update_league_task(instance_id):
+    """Задача для автоматического изменения лиги пользователей"""
+    instance = Player.objects.get(id=instance_id)
+    leagues = League.objects.order_by('min_coin')
+    # Находим индекс текущей лиги пользователя
+    current_league_index = None
+    for index, league in enumerate(leagues):
+        if instance.league == league:
+            current_league_index = index
+            break
 
-# @shared_task
-# def update_league_task(instance_id):
-#     """Задача для автоматического изменения лиги пользователей"""
-#     task_id = f'leagues_task_{instance_id}'
-#     instance = Player.objects.get(id=instance_id)
-#     leagues = League.objects.order_by('min_coin')
-#     # Находим индекс текущей лиги пользователя
-#     current_league_index = None
-#     for index, league in enumerate(leagues):
-#         if instance.league == league:
-#             current_league_index = index
-#             break
-#
-#     # Если текущая лига не найдена, начинаем с самой низшей лиги
-#     if current_league_index is None:
-#         current_league_index = 0
-#
-#     # Проверяем лиги, начиная с текущей и выше
-#     for league in leagues[current_league_index:]:
-#         if instance.coin >= league.min_coin:
-#             instance.league = league
-#             instance.save(update_fields=['coin', ])
-#             cache.delete(task_id)
-#             update_league_task.apply_async((instance.id,), countdown=1)
-#         else:
-#             cache.delete(task_id)
+    # Если текущая лига не найдена, начинаем с самой низшей лиги
+    if current_league_index is None:
+        current_league_index = 0
+
+    # Проверяем лиги, начиная с текущей и выше
+    for league in leagues[current_league_index:]:
+        if instance.coin >= league.min_coin:
+            instance.league = league
+        else:
+            break
+    instance.save()

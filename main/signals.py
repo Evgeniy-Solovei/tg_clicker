@@ -2,7 +2,7 @@ from django.core.cache import cache
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from .models import *
-from .tasks import energy_task, flag_autobot_task
+from .tasks import energy_task, flag_autobot_task, update_league_task
 import logging
 
 logger = logging.getLogger(__name__)
@@ -37,21 +37,25 @@ def my_changed_flag_autobot(sender, instance, created, **kwargs):
             instance.save(update_fields=['flag_autobot'])
 
 
-# @receiver(pre_save, sender=Player)
-# def set_default_league(sender, instance, **kwargs):
-#     """Задаём дефолтное значение лиги при создании нового игрока."""
-#     if not instance.league:
-#         # Находим деревянную лигу с минимальным количеством монет 1000
-#         default_league = League.objects.filter(min_coin=1000).first()
-#         if default_league:
-#             instance.league = default_league
-#
-#
-# @receiver(post_save, sender=Player)
-# def update_league(sender, instance, **kwargs):
-#     """Сигнал об изменении монет"""
-#     update_fields = kwargs.get('update_fields')
-#     print(update_fields)
-#     if update_fields and 'coin' in update_fields:
-#         print(f"Юзер айди: {instance.id}")
-#         update_league_task.apply_async((instance.id,))
+@receiver(pre_save, sender=Player)
+def set_default_league(sender, instance, **kwargs):
+    """Задаём дефолтное значение лиги при создании нового игрока."""
+    if not instance.league:
+        # Находим деревянную лигу с минимальным количеством монет 1000
+        default_league = League.objects.filter(min_coin=1000).first()
+        if default_league:
+            instance.league = default_league
+            instance.save(update_fields=['league'])  # Не забудьте сохранить изменения
+            logger.debug(f'League set to default league: {default_league} for player {instance.id}')
+        else:
+            logger.debug(f'No default league found with min_coin=1000')
+
+
+@receiver(post_save, sender=Player)
+def update_league(sender, instance, **kwargs):
+    """Сигнал об изменении монет"""
+    update_fields = kwargs.get('update_fields')
+    print(update_fields)
+    if update_fields and 'coin' in update_fields:
+        print(f"Юзер айди: {instance.id}")
+        update_league_task(instance.id,)

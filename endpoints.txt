@@ -44,7 +44,7 @@ Get - запрос
 
 
 9)Открытие ящика http://45.131.41.151:8000/api/open_box/
-Post - запрос Ожидаемые поля ( name_box,tg_id )
+Post - запрос Ожидаемые поля ( name_box,tg_id, free_open )
 Ответ: prize_name(название приза),prize_count(количество),prize_chance(шанс в процентах)
 
 10) Забрать приз и сразу же применить http://45.131.41.151:8000/api/take_and_apply_bonus/
@@ -67,7 +67,8 @@ flag ( если это флаг True значит бонус можно забр
 
 13)Забрать бонус за рефералку  http://45.131.41.151:8000/api/taking_referral_bonus/
 Post - запрос Ожидаемые поля (tg_id)
-Ответ: ( если это игрок который пригласил то 'name_box': 'Silver_free' , если новый игрок 'name_box': 'Bronze_free')
+Ответ: ( если это игрок который пригласил то 'name_box': 'Silver','free_open': True  , если новый игрок
+'name_box': 'Bronze', 'free_open': True)
 ВАЖНО! сразу после этого запроса вызывать эндпоинт 9)Открытие ящика http://45.131.41.151:8000/api/open_box/
 
 
@@ -78,4 +79,13 @@ Get - запрос
 
 15) Получаем все лиги http://45.131.41.151:8000/all_leagues/
 Get - запрос
-Ответ:name(название ящика),price(стоимость) prize_name(название приза),prize_count(количество),prize_chance(шанс в процентах)
+Ответ:name(название лиги),min_coin(Количество монет для входа в лигу) price(цена, если вдруг появятся платные лиги),
+is_active(Активная/не активная)
+
+    """
+    Модель лиг для игроков.
+    """
+    name = models.CharField(max_length=50, verbose_name="Название лиги")
+    min_coin = models.PositiveBigIntegerField(default=0, verbose_name="Количество монет для входа в лигу")
+    price = models.PositiveBigIntegerField(default=0, verbose_name="Цена лиги")
+    is_active = models.BooleanField(default=True, verbose_name="Активен/неактивен")
