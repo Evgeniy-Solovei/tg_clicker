@@ -19,7 +19,7 @@ class BoxAdmin(admin.ModelAdmin):
 
 @admin.register(Prize)
 class PrizeAdmin(admin.ModelAdmin):
-    pass
+    list_display = ["id", "name", "count", "chance"]
 
 
 @admin.register(ReferralSystem)
@@ -30,3 +30,8 @@ class ReferralSystemAdmin(admin.ModelAdmin):
 @admin.register(League)
 class LeagueAdmin(admin.ModelAdmin):
     pass
+
+
+@admin.register(PlayerSkins)
+class PlayerSkinsAdmin(admin.ModelAdmin):
+    list_display = ["id", "player", "prize", "id_prize"]

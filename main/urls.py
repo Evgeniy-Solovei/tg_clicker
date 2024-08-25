@@ -19,4 +19,5 @@ urlpatterns = [
     path('taking_referral_bonus/', TakinReferralBonus.as_view(), name='takin_bonus'),
     path('generate_link/<int:tg_id>/', GenerateRefLinkView.as_view(), name='generate_link'),
     path('all_leagues/', LeagueListView.as_view(), name='league-list'),
+    path('all_skins_player/<int:tg_id>/', SkinsPlayerList.as_view(), name='skin-list'),
 ]
