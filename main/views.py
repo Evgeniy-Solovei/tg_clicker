@@ -1,4 +1,5 @@
 import random
+from rest_framework.exceptions import NotFound
 from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -6,7 +7,7 @@ from rest_framework.views import APIView
 from .models import *
 from django.shortcuts import get_object_or_404
 import logging
-from .serializers import LeaguesSerializer
+from .serializers import LeaguesSerializer, PlayerSkinsSerializer
 
 
 class Main_info(APIView):
@@ -190,7 +191,10 @@ class Open_Box(APIView):
             for prize in prizes:
                 summ_chance += prize.chance
                 if rand <= summ_chance:
+                    if prize.name == 'Skin' and 'Skin' in [p['prize_name'] for p in result]:
+                        continue  # Пропускаем добавление второго приза с именем "Skin"
                     result.append({
+                        'prize_id': prize.id,
                         'prize_name': prize.name,
                         'prize_count': prize.count,
                         'prize_chance': prize.chance
@@ -227,7 +231,10 @@ class Take_And_Apply_Bonus(APIView):
                 player.upgrade.autobot_lvl += 1
             elif prize_name == "Dimonds":
                 player.crystal += prize_count
-                a = {'key': 'вам выпал скин'}
+            elif prize_name == "Skin":
+                if not PlayerSkins.objects.filter(player=player, id_prize=prize.get('prize_id')).exists():
+                    prize_instance = Prize.objects.get(id=prize.get('prize_id'))
+                    PlayerSkins.objects.create(player=player, prize=prize_instance, id_prize=prize.get('prize_id'))
 
         player.save()
         player.upgrade.save()
@@ -320,3 +327,13 @@ class GenerateRefLinkView(APIView):
 class LeagueListView(ListAPIView):
     queryset = League.objects.all()
     serializer_class = LeaguesSerializer
+
+
+class SkinsPlayerList(ListAPIView):
+    serializer_class = PlayerSkinsSerializer
+
+    def get_queryset(self):
+        tg_id = self.kwargs.get('tg_id')
+        if not tg_id:
+            raise NotFound("Требуется параметр tg_id")
+        return PlayerSkins.objects.filter(player__tg_id=tg_id).all()

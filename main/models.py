@@ -85,15 +85,9 @@ class League(models.Model):
     def __str__(self):
         return f"{self.name} (min coin: {self.min_coin})"
 
-# class Skins(models.Model):
-#     """
-#     Модель скинов для игрока.
-#     """
-#     name = models.CharField(max_length=35, verbose_name='Название скина')
-#     player = models.ManyToManyField('Player', related_name='skins', verbose_name="Игрок")
-#     box = models.ManyToManyField('Box', related_name='skins', verbose_name="Коробка"
-#     price = models.PositiveBigIntegerField(default=0, verbose_name="Цена скина")
-#     is_active = models.BooleanField(default=True, verbose_name="Активен/неактивен")
-#
-#
 
+class PlayerSkins(models.Model):
+    """Модель для извлечения всех скинов у пользователя"""
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='player_prizes', verbose_name="Игрок")
+    prize = models.ForeignKey(Prize, on_delete=models.CASCADE, related_name='player_prizes', verbose_name="Приз")
+    id_prize = models.IntegerField(null=True, blank=True, verbose_name="ID приза из БД")

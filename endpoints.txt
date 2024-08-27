@@ -45,7 +45,7 @@ Get - запрос
 
 9)Открытие ящика http://45.131.41.151:8000/api/open_box/
 Post - запрос Ожидаемые поля ( name_box,tg_id, free_open )
-Ответ: prize_name(название приза),prize_count(количество),prize_chance(шанс в процентах)
+Ответ: prize_name(название приза),prize_count(количество),prize_chance(шанс в процентах), prize.id(id приза)
 
 10) Забрать приз и сразу же применить http://45.131.41.151:8000/api/take_and_apply_bonus/
 Post - запрос Ожидаемые поля ( смотреть фото в тг!!!!!!!!!!!!!)
@@ -82,10 +82,6 @@ Get - запрос
 Ответ:name(название лиги),min_coin(Количество монет для входа в лигу) price(цена, если вдруг появятся платные лиги),
 is_active(Активная/не активная)
 
-    """
-    Модель лиг для игроков.
-    """
-    name = models.CharField(max_length=50, verbose_name="Название лиги")
-    min_coin = models.PositiveBigIntegerField(default=0, verbose_name="Количество монет для входа в лигу")
-    price = models.PositiveBigIntegerField(default=0, verbose_name="Цена лиги")
-    is_active = models.BooleanField(default=True, verbose_name="Активен/неактивен")
+16) Получаем все скины игрока http://45.131.41.151:8000/all_skins_player/
+Get - запрос
+Ответ:player(игрок которому принадлежат скины),prize(Приз(скин)) id_prize(id приза скина из БД)
