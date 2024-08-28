@@ -37,7 +37,7 @@ def flag_autobot_task(instance_id):
 
 
 @shared_task
-def update_league_task(instance_id):
+async def update_league_task(instance_id):
     """Задача для автоматического изменения лиги пользователей"""
     instance = Player.objects.get(id=instance_id)
     leagues = League.objects.order_by('min_coin')

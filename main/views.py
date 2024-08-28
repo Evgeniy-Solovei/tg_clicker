@@ -325,8 +325,18 @@ class GenerateRefLinkView(APIView):
 
 
 class LeagueListView(ListAPIView):
+    """Лиги с отсортированными пользователями"""
     queryset = League.objects.all()
     serializer_class = LeaguesSerializer
+
+    def get_queryset(self):
+        # Получаем все лиги с отсортированными игроками
+        leagues = League.objects.prefetch_related('players').order_by('min_coin')
+        # Отсортируем игроков по количеству монет
+        for league in leagues:
+            league.sorted_players = league.players.all().order_by('-coin')
+
+        return leagues
 
 
 class SkinsPlayerList(ListAPIView):
