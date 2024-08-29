@@ -55,7 +55,5 @@ def set_default_league(sender, instance, **kwargs):
 def update_league(sender, instance, **kwargs):
     """Сигнал об изменении монет"""
     update_fields = kwargs.get('update_fields')
-    print(update_fields)
     if update_fields and 'coin' in update_fields:
-        print(f"Юзер айди: {instance.id}")
         update_league_task(instance.id,)
