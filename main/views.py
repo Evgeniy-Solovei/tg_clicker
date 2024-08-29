@@ -324,19 +324,22 @@ class GenerateRefLinkView(APIView):
         return Response({'ref_link': create_link}, status=status.HTTP_200_OK)
 
 
-class LeagueListView(ListAPIView):
-    """Лиги с отсортированными пользователями"""
-    queryset = League.objects.all()
+class LeagueDetailView(ListAPIView):
+    """Детальная информация о лиге с отсортированными пользователями"""
     serializer_class = LeaguesSerializer
 
     def get_queryset(self):
-        # Получаем все лиги с отсортированными игроками
-        leagues = League.objects.prefetch_related('players').order_by('min_coin')
-        # Отсортируем игроков по количеству монет
-        for league in leagues:
-            league.sorted_players = league.players.all().order_by('-coin')
+        # Получаем название лиги из параметров запроса
+        league_name = self.request.data.get('name', None)
+        tg_id = self.request.data.get('tg_id', None)
 
-        return leagues
+        if tg_id:
+            player = Player.objects.get(tg_id=tg_id)
+            return League.objects.filter(id=player.league_id).prefetch_related('players')
+        elif league_name:
+            return League.objects.filter(name=league_name).prefetch_related('players')
+        else:
+            return League.objects.all()
 
 
 class SkinsPlayerList(ListAPIView):
