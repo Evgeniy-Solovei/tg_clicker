@@ -45,7 +45,6 @@ def set_default_league(sender, instance, **kwargs):
         default_league = League.objects.filter(min_coin=1000).first()
         if default_league:
             instance.league = default_league
-            instance.save(update_fields=['league'])  # Не забудьте сохранить изменения
             logger.debug(f'League set to default league: {default_league} for player {instance.id}')
         else:
             logger.debug(f'No default league found with min_coin=1000')

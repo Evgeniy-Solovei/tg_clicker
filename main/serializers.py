@@ -7,16 +7,21 @@ class PlayerSerializer(serializers.ModelSerializer):
     """Сериализатор для модели Player"""
     class Meta:
         model = Player
-        fields = ('tg_id', 'name', 'coin', 'lvl',)
+        fields = ('tg_id', 'name', 'coin')
 
 
 class LeaguesSerializer(serializers.ModelSerializer):
     """Сериализатор для модели Leagues"""
-    players = PlayerSerializer(many=True, read_only=True)
+    players = serializers.SerializerMethodField()
 
     class Meta:
         model = League
-        fields = ('name', 'min_coin', 'price', 'is_active', 'players')
+        fields = ('name', 'min_coin', 'players')
+
+    def get_players(self, obj):
+        # Сортируем игроков по количеству монет перед сериализацией
+        sorted_players = obj.players.all().order_by('-coin')
+        return PlayerSerializer(sorted_players, many=True).data
 
 
 class PlayerSkinsSerializer(serializers.ModelSerializer):
