@@ -330,8 +330,8 @@ class LeagueDetailView(ListAPIView):
 
     def get_queryset(self):
         # Получаем название лиги из параметров запроса
-        league_name = self.request.data.get('name', None)
-        tg_id = self.request.data.get('tg_id', None)
+        tg_id = self.kwargs.get('tg_id', None)
+        league_name = self.kwargs.get('name', None)
 
         if tg_id:
             player = Player.objects.get(tg_id=tg_id)
