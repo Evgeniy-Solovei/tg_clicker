@@ -1,1 +1,0 @@
-import{j as s,D as n}from"./index-EBoFHVxy.js";const t="/assets/svgEnot-B1DfqiZP.png",i="_container_1iq9u_1",o={container:i};function r(){return s.jsxs(n,{children:[" ",s.jsxs("div",{className:o.container,children:[s.jsx("p",{children:"SKINS"}),s.jsx("img",{src:t})]})]})}export{r as default};
