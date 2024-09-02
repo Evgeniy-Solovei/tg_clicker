@@ -18,6 +18,9 @@ class Main_info(APIView):
             player = Player.objects.create(tg_id=tg_id, name=name)
             Upgrade.objects.create(player=player)
 
+        # Вычисляем текущий бонус на основе damage и autobot_time
+        current_bonus = player.upgrade.damage * (player.upgrade.autobot_time // 2)
+
         info = {"lvl": player.lvl,
                 "coin": player.coin,
                 "energy_start": player.energy,
@@ -29,6 +32,7 @@ class Main_info(APIView):
                 "energy_per_tap": player.upgrade.one_tap_energy,
                 "coin_bonus_result": player.upgrade.coin_bonus_result,
                 "league": player.league.name if player.league else None,
+                "current_bonus": current_bonus
                 }
 
         return Response(info, status=status.HTTP_200_OK)
