@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from main.models import League, PlayerSkins, Player
+from main.models import League, PlayerSkins, Player, TaskPlayer
 
 
 class PlayerSerializer(serializers.ModelSerializer):
@@ -28,4 +28,14 @@ class PlayerSkinsSerializer(serializers.ModelSerializer):
     """Сериализатор для модели PlayerSkins"""
     class Meta:
         model = PlayerSkins
-        fields = ['player', 'prize', 'id_prize']
+        fields = ['player', 'prize', 'id_prize', 'description', 'name']
+
+
+class TaskPlayerSerializer(serializers.ModelSerializer):
+    """Сериализатор для модели TaskPlayer"""
+
+    class Meta:
+        model = TaskPlayer
+        fields = ['name', 'description', 'completed', 'is_active', 'start_time']
+
+

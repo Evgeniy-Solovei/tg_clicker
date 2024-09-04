@@ -55,8 +55,9 @@ def update_league_task(instance_id):
     # Проверяем лиги, начиная с текущей и выше
     for league in leagues[current_league_index:]:
         if instance.coin >= league.min_coin:
-            instance.league = league
-            instance.lvl += 1
+            if instance.league != league:
+                instance.league = league
+                instance.lvl += 1
         else:
             break
     instance.save()

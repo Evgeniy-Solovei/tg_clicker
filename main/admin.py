@@ -35,3 +35,8 @@ class LeagueAdmin(admin.ModelAdmin):
 @admin.register(PlayerSkins)
 class PlayerSkinsAdmin(admin.ModelAdmin):
     list_display = ["id", "player", "prize", "id_prize"]
+
+
+@admin.register(TaskPlayer)
+class TaskPlayerAdmin(admin.ModelAdmin):
+    list_display = ["id", "name", "description", "link", "completed", "is_active"]

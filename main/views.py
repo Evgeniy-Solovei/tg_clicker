@@ -1,5 +1,5 @@
 import random
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -7,7 +7,7 @@ from rest_framework.views import APIView
 from .models import *
 from django.shortcuts import get_object_or_404
 import logging
-from .serializers import LeaguesSerializer, PlayerSkinsSerializer
+from .serializers import LeaguesSerializer, PlayerSkinsSerializer, TaskPlayerSerializer
 
 
 class Main_info(APIView):
@@ -32,7 +32,9 @@ class Main_info(APIView):
                 "energy_per_tap": player.upgrade.one_tap_energy,
                 "coin_bonus_result": player.upgrade.coin_bonus_result,
                 "league": player.league.name if player.league else None,
-                "current_bonus": current_bonus
+                "current_bonus": current_bonus,
+                "boxes_available": player.boxes_available,
+                "show_instruction": player.show_instruction
                 }
 
         return Response(info, status=status.HTTP_200_OK)
@@ -158,6 +160,9 @@ class Get_All_Box(APIView):
 class Open_Box(APIView):
     def post(self, request):
         player = get_object_or_404(Player, tg_id=request.data['tg_id'])
+        # Проверка на доступность сундуков для игрока
+        if not player.boxes_available:
+            raise PermissionDenied('Сундуки недоступны для открытия')
         name = request.data['name_box']
         free_open = request.data.get('free_open', False)  # значение по умолчанию, если не пришло в теле
         box = get_object_or_404(Box, name=name)
@@ -354,3 +359,51 @@ class SkinsPlayerList(ListAPIView):
         if not tg_id:
             raise NotFound("Требуется параметр tg_id")
         return PlayerSkins.objects.filter(player__tg_id=tg_id).all()
+
+
+class TaskPlayerDetailView(APIView):
+    """Информация о задачах и их статусе у игрока"""
+
+    def get(self, request, tg_id, description=None):
+        """Получаем информацию о всех задачах или об одной"""
+        player = get_object_or_404(Player, tg_id=tg_id)
+        if description:
+            tasks = TaskPlayer.objects.filter(player=player, description=description)
+        else:
+            tasks = TaskPlayer.objects.filter(player=player)
+
+        # Проверяем, что tasks является queryset'ом
+        if not tasks.exists():
+            return Response({"detail": "Задачи не найдены"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = TaskPlayerSerializer(tasks, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request, tg_id, description):
+        """Проверяем прошло ли 30 минут что бы задача считалась выполненная"""
+        if tg_id and description:
+            player = get_object_or_404(Player, tg_id=tg_id)
+            tasks = TaskPlayer.objects.filter(player=player, description=description)
+            task = tasks.first()
+            serializer = TaskPlayerSerializer(task, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                task.check_completion()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'tg_id и description обязательные поля'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class StartTaskView(APIView):
+    """Запуск таймера задачи после перехода на ссылку"""
+    def post(self, request, tg_id, description):
+        """Запуск таймера после перехода на ссылку"""
+        player = get_object_or_404(Player, tg_id=tg_id)
+        tasks = TaskPlayer.objects.filter(player=player, description=description)
+        task = tasks.first()
+        serializer = TaskPlayerSerializer(task, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            task.start_task_player()  # Запуск таймера выполнения задачи
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
