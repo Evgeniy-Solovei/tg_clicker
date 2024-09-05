@@ -1,4 +1,6 @@
+from datetime import timedelta
 from django.db import models
+from django.utils import timezone
 
 
 class Player(models.Model):
@@ -15,6 +17,8 @@ class Player(models.Model):
     price_gold_case = models.PositiveBigIntegerField(default=100000, verbose_name="Цена золотого сундука")
     league = models.ForeignKey('League', null=True, blank=True,on_delete=models.CASCADE, related_name='players',
                                verbose_name="Лига игрока")
+    boxes_available = models.BooleanField(default=False, verbose_name="Доступны ли сундуки")
+    show_instruction = models.BooleanField(default=True, verbose_name="Показывать инструкцию")
 
     def __str__(self):
         return f"name:{self.name}, tg_id:{self.tg_id}, lvl:{self.lvl}, coins:{self.coin}, id:{self.pk}"
@@ -46,6 +50,7 @@ class Box(models.Model):
     """Модель коробки с призами"""
     name = models.CharField(max_length=30, verbose_name="Название коробки")
     prizes = models.ManyToManyField('Prize', related_name='box', verbose_name="Призы")
+    is_active = models.BooleanField(default=False)
 
     def __str__(self):
         return f"name:{self.name}"
@@ -91,3 +96,30 @@ class PlayerSkins(models.Model):
     player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='player_prizes', verbose_name="Игрок")
     prize = models.ForeignKey(Prize, on_delete=models.CASCADE, related_name='player_prizes', verbose_name="Приз")
     id_prize = models.IntegerField(null=True, blank=True, verbose_name="ID приза из БД")
+    description = models.CharField(max_length=100, default='', verbose_name='Описание скина')
+    name = models.CharField(max_length=30, default='', verbose_name='Название скина')
+
+
+class TaskPlayer(models.Model):
+    player = models.ManyToManyField(Player, related_name='players_task', blank=True, verbose_name='Игрок')
+    name = models.CharField(max_length=20, verbose_name='Название задачи', default='')
+    description = models.CharField(max_length=100, default='', verbose_name='Описание задачи')
+    link = models.URLField(blank=True, null=True, verbose_name='Ссылка на аккаунт для выполнения задания')
+    completed = models.BooleanField(default=False, verbose_name='Выполнено/не выполнено')
+    is_active = models.BooleanField(default=True, verbose_name="Активна/неактивна")
+    start_time = models.DateTimeField(null=True, blank=True, verbose_name='Старт выполнения задачи')
+
+    def check_completion(self):
+        """Проверяем прошло ли 30 минут и зачитываем выполнение задачи"""
+        if self.start_time and timezone.now() >= self.start_time + timedelta(minutes=1):
+            if not self.completed:  # Избегаем лишнего сохранения, если задача уже завершена
+                self.completed = True
+                self.save()
+
+    def start_task_player(self):
+        """При вызове представления, задаём полю значение начало выполнение задачи"""
+        self.start_time = timezone.now()
+        self.save()
+
+    # Поле для добавление друзей должно быть такое description = 'add_friends'
+
