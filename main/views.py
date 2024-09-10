@@ -352,6 +352,7 @@ class LeagueDetailView(ListAPIView):
 
 
 class SkinsPlayerList(ListAPIView):
+    """Список всех скинов юзера"""
     serializer_class = PlayerSkinsSerializer
 
     def get_queryset(self):
@@ -362,6 +363,7 @@ class SkinsPlayerList(ListAPIView):
 
 
 class SkinsLeagueList(ListAPIView):
+    """Список всех скинов у Лиг"""
     serializer_class = LeagueSkinsSerializer
 
     def get_queryset(self):
