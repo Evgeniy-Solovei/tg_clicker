@@ -58,6 +58,11 @@ def update_league_task(instance_id):
             if instance.league != league:
                 instance.league = league
                 instance.lvl += 1
+                # Делаем скин принадлежащий лиги доступным
+                league_skin = LeagueSkins.objects.filter(player=instance, league=league).first()
+                if league_skin:
+                    league_skin.available_skin = True
+                    league_skin.save()
         else:
             break
     instance.save()
