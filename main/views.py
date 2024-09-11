@@ -7,7 +7,7 @@ from rest_framework.views import APIView
 from .models import *
 from django.shortcuts import get_object_or_404
 import logging
-from .serializers import LeaguesSerializer, PlayerSkinsSerializer, TaskPlayerSerializer
+from .serializers import LeaguesSerializer, PlayerSkinsSerializer, TaskPlayerSerializer, LeagueSkinsSerializer
 
 
 class Main_info(APIView):
@@ -352,6 +352,7 @@ class LeagueDetailView(ListAPIView):
 
 
 class SkinsPlayerList(ListAPIView):
+    """Список всех скинов юзера"""
     serializer_class = PlayerSkinsSerializer
 
     def get_queryset(self):
@@ -359,6 +360,50 @@ class SkinsPlayerList(ListAPIView):
         if not tg_id:
             raise NotFound("Требуется параметр tg_id")
         return PlayerSkins.objects.filter(player__tg_id=tg_id).all()
+
+
+class SkinsLeagueList(ListAPIView):
+    """Список всех скинов у Лиг"""
+    serializer_class = LeagueSkinsSerializer
+
+    def get_queryset(self):
+        tg_id = self.kwargs.get('tg_id')
+        if not tg_id:
+            raise NotFound("Требуется параметр tg_id")
+        return LeagueSkins.objects.filter(player__tg_id=tg_id).all()
+
+
+class ActivateSkinView(APIView):
+    """API для активации выбранного скина"""
+
+    def post(self, request, *args, **kwargs):
+        tg_id = request.data.get('tg_id')
+        skin_id = request.data.get('skin_id')
+
+        if not tg_id or not skin_id:
+            return Response({'error': 'Параметры tg_id и skin_id обязательны'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            # Деактивация всех скинов игрока
+            player = Player.objects.filter(tg_id=tg_id).first()
+            if not player:
+                raise NotFound("Игрок не найден")
+
+            PlayerSkins.objects.filter(player=player).update(is_active=False)
+            LeagueSkins.objects.filter(player=player).update(is_active=False)
+
+            # Активация выбранного скина
+            skin = PlayerSkins.objects.filter(id=skin_id, player=player).first() or \
+                   LeagueSkins.objects.filter(id=skin_id, player=player).first()
+
+            if skin:
+                skin.is_active = True
+                skin.save()
+                return Response({'message': 'Скин активирован'}, status=status.HTTP_200_OK)
+            else:
+                return Response({'error': 'Скин не найден'}, status=status.HTTP_404_NOT_FOUND)
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class TaskPlayerDetailView(APIView):
