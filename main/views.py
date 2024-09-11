@@ -359,7 +359,7 @@ class SkinsPlayerList(ListAPIView):
         tg_id = self.kwargs.get('tg_id')
         if not tg_id:
             raise NotFound("Требуется параметр tg_id")
-        return PlayerSkins.objects.filter(player__tg_id=tg_id, available_skin=True).all()
+        return PlayerSkins.objects.filter(player__tg_id=tg_id).all()
 
 
 class SkinsLeagueList(ListAPIView):
@@ -370,7 +370,7 @@ class SkinsLeagueList(ListAPIView):
         tg_id = self.kwargs.get('tg_id')
         if not tg_id:
             raise NotFound("Требуется параметр tg_id")
-        return LeagueSkins.objects.filter(player__tg_id=tg_id, available_skin=True).all()
+        return LeagueSkins.objects.filter(player__tg_id=tg_id).all()
 
 
 class ActivateSkinView(APIView):
