@@ -7,7 +7,7 @@ from rest_framework.views import APIView
 from .models import *
 from django.shortcuts import get_object_or_404
 import logging
-from .serializers import LeaguesSerializer, PlayerSkinsSerializer, TaskPlayerSerializer, LeagueSkinsSerializer
+from .serializers import LeaguesSerializer, TaskPlayerSerializer, SkinSerializer
 
 
 class Main_info(APIView):
@@ -241,9 +241,9 @@ class Take_And_Apply_Bonus(APIView):
             elif prize_name == "Dimonds":
                 player.crystal += prize_count
             elif prize_name == "Skin":
-                if not PlayerSkins.objects.filter(player=player, id_prize=prize.get('prize_id')).exists():
+                if not Skin.objects.filter(player=player, id_prize=prize.get('prize_id')).exists():
                     prize_instance = Prize.objects.get(id=prize.get('prize_id'))
-                    PlayerSkins.objects.create(player=player, prize=prize_instance, id_prize=prize.get('prize_id'))
+                    Skin.objects.create(player=player, prize=prize_instance, id_prize=prize.get('prize_id'))
 
         player.save()
         player.upgrade.save()
@@ -351,26 +351,17 @@ class LeagueDetailView(ListAPIView):
             return League.objects.all()
 
 
-class SkinsPlayerList(ListAPIView):
-    """Список всех скинов юзера"""
-    serializer_class = PlayerSkinsSerializer
-
-    def get_queryset(self):
-        tg_id = self.kwargs.get('tg_id')
-        if not tg_id:
-            raise NotFound("Требуется параметр tg_id")
-        return PlayerSkins.objects.filter(player__tg_id=tg_id).all()
-
-
-class SkinsLeagueList(ListAPIView):
+class SkinsList(ListAPIView):
     """Список всех скинов у Лиг"""
-    serializer_class = LeagueSkinsSerializer
+    serializer_class = SkinSerializer
 
     def get_queryset(self):
         tg_id = self.kwargs.get('tg_id')
         if not tg_id:
             raise NotFound("Требуется параметр tg_id")
-        return LeagueSkins.objects.filter(player__tg_id=tg_id).all()
+
+        # Упорядочиваем скины так, чтобы сначала были те, у которых available_skin = True
+        return Skin.objects.filter(player__tg_id=tg_id).order_by('-available_skin', 'id')
 
 
 class ActivateSkinView(APIView):
@@ -388,12 +379,10 @@ class ActivateSkinView(APIView):
             if not player:
                 raise NotFound("Игрок не найден")
 
-            PlayerSkins.objects.filter(player=player).update(is_active=False)
-            LeagueSkins.objects.filter(player=player).update(is_active=False)
+            Skin.objects.filter(player=player).update(is_active=False)
 
             # Активация выбранного скина
-            skin = PlayerSkins.objects.filter(id=skin_id, player=player).first() or \
-                   LeagueSkins.objects.filter(id=skin_id, player=player).first()
+            skin = Skin.objects.filter(id=skin_id, player=player).first()
 
             if skin:
                 skin.is_active = True
@@ -404,6 +393,61 @@ class ActivateSkinView(APIView):
 
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# class SkinsPlayerList(ListAPIView):
+#     """Список всех скинов юзера"""
+#     serializer_class = PlayerSkinsSerializer
+#
+#     def get_queryset(self):
+#         tg_id = self.kwargs.get('tg_id')
+#         if not tg_id:
+#             raise NotFound("Требуется параметр tg_id")
+#         return PlayerSkins.objects.filter(player__tg_id=tg_id).all()
+#
+#
+# class SkinsLeagueList(ListAPIView):
+#     """Список всех скинов у Лиг"""
+#     serializer_class = LeagueSkinsSerializer
+#
+#     def get_queryset(self):
+#         tg_id = self.kwargs.get('tg_id')
+#         if not tg_id:
+#             raise NotFound("Требуется параметр tg_id")
+#         return LeagueSkins.objects.filter(player__tg_id=tg_id).all()
+#
+#
+# class ActivateSkinView(APIView):
+#     """API для активации выбранного скина"""
+#
+#     def post(self, request, *args, **kwargs):
+#         tg_id = request.data.get('tg_id')
+#         skin_id = request.data.get('skin_id')
+#
+#         if not tg_id or not skin_id:
+#             return Response({'error': 'Параметры tg_id и skin_id обязательны'}, status=status.HTTP_400_BAD_REQUEST)
+#         try:
+#             # Деактивация всех скинов игрока
+#             player = Player.objects.filter(tg_id=tg_id).first()
+#             if not player:
+#                 raise NotFound("Игрок не найден")
+#
+#             PlayerSkins.objects.filter(player=player).update(is_active=False)
+#             LeagueSkins.objects.filter(player=player).update(is_active=False)
+#
+#             # Активация выбранного скина
+#             skin = PlayerSkins.objects.filter(id=skin_id, player=player).first() or \
+#                    LeagueSkins.objects.filter(id=skin_id, player=player).first()
+#
+#             if skin:
+#                 skin.is_active = True
+#                 skin.save()
+#                 return Response({'message': 'Скин активирован'}, status=status.HTTP_200_OK)
+#             else:
+#                 return Response({'error': 'Скин не найден'}, status=status.HTTP_404_NOT_FOUND)
+#
+#         except Exception as e:
+#             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class TaskPlayerDetailView(APIView):

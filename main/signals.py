@@ -63,10 +63,12 @@ def update_league(sender, instance, **kwargs):
 
 @receiver(post_save, sender=Player)
 def assign_existing_tasks_to_player(sender, instance, created, **kwargs):
-    """Присваиваем все существующие задачи игроку при создании нового игрока."""
+    """Присваиваем все существующие задачи и скины игроку при создании нового игрока."""
     if created:
         tasks = TaskPlayer.objects.all()
         instance.players_task.set(tasks)
+        skins = Skin.objects.all()
+        instance.skins.set(skins)
 
 
 @receiver(post_save, sender=TaskPlayer)
