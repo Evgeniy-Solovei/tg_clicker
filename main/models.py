@@ -91,25 +91,47 @@ class League(models.Model):
         return f"{self.name} (min coin: {self.min_coin})"
 
 
-class PlayerSkins(models.Model):
-    """Модель для извлечения всех скинов у пользователя"""
-    player = models.ManyToManyField(Player, blank=True, related_name='player_skins', verbose_name="Игрок")
-    prize = models.ForeignKey(Prize, on_delete=models.CASCADE, related_name='player_prizes', verbose_name="Приз")
+class Skin(models.Model):
+    """Модель для скинов (призы и лиги)"""
+
+    class SkinType(models.TextChoices):
+        PLAYER = 'player', 'Сундук'
+        LEAGUE = 'league', 'Лига'
+
+    player = models.ManyToManyField(Player, blank=True, related_name='skins', verbose_name="Игрок")
+    prizes = models.ManyToManyField(Prize, blank=True, related_name='skins', verbose_name="Призы")
+    league = models.OneToOneField(League, on_delete=models.CASCADE, related_name='skin', verbose_name="Лига скина",
+                                  null=True, blank=True)
     id_prize = models.IntegerField(null=True, blank=True, verbose_name="ID приза из БД")
-    description = models.CharField(max_length=100, default='', verbose_name='Описание скина')
-    name = models.CharField(max_length=30, default='', verbose_name='Название скина')
-    available_skin = models.BooleanField(default=False, verbose_name='Доступен/недоступен пользователю')
-    is_active = models.BooleanField(default=False, verbose_name='Нынешний скин')
-
-
-class LeagueSkins(models.Model):
-    """Модель скинов для лиг"""
-    player = models.ManyToManyField(Player, blank=True, related_name='league_skins', verbose_name="Игрок")
     name = models.CharField(max_length=30, default='', verbose_name='Название скина')
     description = models.CharField(max_length=100, default='', verbose_name='Описание скина')
-    league = models.OneToOneField(League, on_delete=models.CASCADE, related_name='league_skin', verbose_name="Лига скина")
     available_skin = models.BooleanField(default=False, verbose_name='Доступен/недоступен пользователю')
     is_active = models.BooleanField(default=False, verbose_name='Нынешний скин')
+    skin_type = models.CharField(max_length=10, choices=SkinType.choices, default=SkinType.PLAYER, verbose_name='Тип скина')
+
+    def __str__(self):
+        return self.name
+
+
+# class PlayerSkins(models.Model):
+#     """Модель для извлечения всех скинов у пользователя"""
+#     player = models.ManyToManyField(Player, blank=True, related_name='player_skins', verbose_name="Игрок")
+#     prize = models.ForeignKey(Prize, on_delete=models.CASCADE, related_name='player_prizes', verbose_name="Приз")
+#     id_prize = models.IntegerField(null=True, blank=True, verbose_name="ID приза из БД")
+#     description = models.CharField(max_length=100, default='', verbose_name='Описание скина')
+#     name = models.CharField(max_length=30, default='', verbose_name='Название скина')
+#     available_skin = models.BooleanField(default=False, verbose_name='Доступен/недоступен пользователю')
+#     is_active = models.BooleanField(default=False, verbose_name='Нынешний скин')
+#
+#
+# class LeagueSkins(models.Model):
+#     """Модель скинов для лиг"""
+#     player = models.ManyToManyField(Player, blank=True, related_name='league_skins', verbose_name="Игрок")
+#     name = models.CharField(max_length=30, default='', verbose_name='Название скина')
+#     description = models.CharField(max_length=100, default='', verbose_name='Описание скина')
+#     league = models.OneToOneField(League, on_delete=models.CASCADE, related_name='league_skin', verbose_name="Лига скина")
+#     available_skin = models.BooleanField(default=False, verbose_name='Доступен/недоступен пользователю')
+#     is_active = models.BooleanField(default=False, verbose_name='Нынешний скин')
 
 
 class TaskPlayer(models.Model):

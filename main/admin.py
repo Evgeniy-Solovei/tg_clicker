@@ -32,14 +32,20 @@ class LeagueAdmin(admin.ModelAdmin):
     pass
 
 
-@admin.register(PlayerSkins)
-class PlayerSkinsAdmin(admin.ModelAdmin):
-    list_display = ["id", "prize", "id_prize"]
+@admin.register(Skin)
+class SkinAdmin(admin.ModelAdmin):
+    list_display = ['id', 'league', 'id_prize', 'name', 'description', 'available_skin', 'description',
+                    'available_skin', 'is_active', 'skin_type']
 
 
-@admin.register(LeagueSkins)
-class LeagueSkinsAdmin(admin.ModelAdmin):
-    list_display = ["id", "name", "description", "league", "available_skin", "is_active"]
+# @admin.register(PlayerSkins)
+# class PlayerSkinsAdmin(admin.ModelAdmin):
+#     list_display = ["id", "prize", "id_prize"]
+#
+#
+# @admin.register(LeagueSkins)
+# class LeagueSkinsAdmin(admin.ModelAdmin):
+#     list_display = ["id", "name", "description", "league", "available_skin", "is_active"]
 
 
 @admin.register(TaskPlayer)
