@@ -28,7 +28,7 @@ class SkinSerializer(serializers.ModelSerializer):
     """Сериализатор для модели Skin"""
     class Meta:
         model = Skin
-        fields = ['prizes', 'league', 'id_prize', 'name', 'description', 'available_skin', 'is_active', 'skin_type']
+        fields = ['id', 'prizes', 'league', 'id_prize', 'name', 'description', 'available_skin', 'is_active', 'skin_type']
 
 
 # class PlayerSkinsSerializer(serializers.ModelSerializer):
@@ -49,6 +49,6 @@ class TaskPlayerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TaskPlayer
-        fields = ['name', 'description', 'completed', 'is_active', 'start_time']
+        fields = ['id', 'name', 'description', 'completed', 'is_active', 'start_time']
 
 

@@ -20,6 +20,9 @@ class Main_info(APIView):
 
         # Вычисляем текущий бонус на основе damage и autobot_time
         current_bonus = player.upgrade.damage * (player.upgrade.autobot_time // 2)
+        # Получаем активный скин игрока
+        active_skin = player.skins.filter(is_active=True).first()
+        active_skin_id = active_skin.id if active_skin else None
 
         info = {"lvl": player.lvl,
                 "coin": player.coin,
@@ -34,7 +37,8 @@ class Main_info(APIView):
                 "league": player.league.name if player.league else None,
                 "current_bonus": current_bonus,
                 "boxes_available": player.boxes_available,
-                "show_instruction": player.show_instruction
+                "show_instruction": player.show_instruction,
+                "active_skin_id": active_skin_id
                 }
 
         return Response(info, status=status.HTTP_200_OK)
