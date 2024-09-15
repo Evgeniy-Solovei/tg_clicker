@@ -19,7 +19,9 @@ class Main_info(APIView):
             Upgrade.objects.create(player=player)
 
         # Вычисляем текущий бонус на основе damage и autobot_time
-        current_bonus = player.upgrade.damage * (player.upgrade.autobot_time // 2)
+        current_bonus = 0
+        if player.upgrade.autobot_time == 0:
+            current_bonus = player.upgrade.damage * (player.upgrade.autobot_time // 2)
         # Получаем активный скин игрока
         active_skin = player.skins.filter(is_active=True).first()
         active_skin_id = active_skin.id if active_skin else None
@@ -38,7 +40,9 @@ class Main_info(APIView):
                 "current_bonus": current_bonus,
                 "boxes_available": player.boxes_available,
                 "show_instruction": player.show_instruction,
-                "active_skin_id": active_skin_id
+                "active_skin_id": active_skin_id,
+                "tasks": player.tasks,
+                "friend_lvl_2": player.friend_lvl_2,
                 }
 
         return Response(info, status=status.HTTP_200_OK)
@@ -310,18 +314,26 @@ class TakinReferralBonus(APIView):
     def post(self, request):
         person = get_object_or_404(Player, tg_id=request.data['tg_id'])
         system = get_object_or_404(ReferralSystem, id=request.data['referral_system_id'])
+        if system.referral.lvl < 2 and system.new_player.lvl < 2:
+            return Response({
+                'Error': 'Оба игрока должны достичь уровня выше 2 для получения бонуса.',
+                'referral_lvl': system.referral.lvl,
+                'new_player_lvl': system.new_player.lvl
+            }, status=status.HTTP_400_BAD_REQUEST)
         if system.referral == person and system.referral_bonus == True:
             system.referral_bonus = False
             system.save()
+            person.crystal += 1000
+            person.save()
             return Response({
-                'name_box': 'Silver',
-                'free_open': True})
+                'referral': 'Получил 1000 кристаллов'})
         if system.new_player == person and system.new_player_bonus == True:
             system.new_player_bonus = False
             system.save()
+            system.new_player.crystal += 500
+            system.new_player.save()
             return Response({
-                'name_box': 'Bronze',
-                'free_open': True})
+                'new_player': 'Получил 500 кристаллов'})
         else:
             return Response({'Error': "Вы уже получали бонус"}, status=status.HTTP_400_BAD_REQUEST)
 
