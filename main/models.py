@@ -130,6 +130,12 @@ class TaskPlayer(models.Model):
             if not self.completed:  # Избегаем лишнего сохранения, если задача уже завершена
                 self.completed = True
                 self.save()
+                for player in self.player.all():
+                    if self.id == 5:  # Для добавления друзей id 5
+                        player.crystal += 10  # Начисляем 10 кристаллов
+                    else:
+                        player.coin += 5000  # Для всех остальных задач начисляем 5000 монет
+                    player.save()
 
     def start_task_player(self):
         """При вызове представления, задаём полю значение начало выполнение задачи"""

@@ -144,7 +144,7 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-#
+
 # CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'  # LHOST
 CELERY_BROKER_URL = 'redis://127.0.0.1:16379/0'
 CELERY_RESULT_BACKEND = 'django-db'

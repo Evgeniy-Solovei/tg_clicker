@@ -49,6 +49,6 @@ class TaskPlayerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TaskPlayer
-        fields = ['id', 'name', 'description', 'completed', 'is_active', 'start_time']
+        fields = ['id', 'name', 'description', 'link', 'completed', 'is_active', 'start_time']
 
 
