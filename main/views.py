@@ -1,9 +1,13 @@
 import random
+
+import requests
 from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
+
+from telegram import TOKEN, CHANNEL_ID, GROUP_ID
 from .models import *
 from django.shortcuts import get_object_or_404
 import logging
@@ -290,7 +294,7 @@ class AllFriends(APIView):
                 'lvl': i.new_player.lvl,
                 'player_id': i.new_player.id,
                 'referral_system_id': i.id,
-                'flag': i.new_player_bonus
+                'flag': i.referral_bonus
             })
 
         # Получаем информацию о том, кто пригласил этого человека
@@ -376,8 +380,8 @@ class SkinsList(ListAPIView):
         if not tg_id:
             raise NotFound("Требуется параметр tg_id")
 
-        # Упорядочиваем скины так, чтобы сначала были те, у которых available_skin = True
-        return Skin.objects.filter(player__tg_id=tg_id).order_by('-available_skin', 'id')
+        # Упорядочиваем скины так, чтобы сначала были те, у которых is_active = True, available_skin = True
+        return Skin.objects.filter(player__tg_id=tg_id).order_by('-is_active', '-available_skin', 'id')
 
 
 class ActivateSkinView(APIView):
@@ -512,3 +516,64 @@ class StartTaskView(APIView):
             task.start_task_player()  # Запуск таймера выполнения задачи
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+def is_user_in_chat(user_tg_id, chat_id, TOKEN):
+    """Функция для проверки, состоит ли пользователь в чате"""
+
+    url = f"https://api.telegram.org/bot{TOKEN}/getChatMember"
+    params = {
+        "chat_id": chat_id,
+        "user_id": user_tg_id
+    }
+    response = requests.get(url, params=params)
+    data = response.json()
+
+    if data['ok']:
+        status = data['result']['status']
+        if status in ['member', 'administrator', 'creator']:
+            return True
+    return False
+
+
+class CheckSubscriptionView(APIView):
+    def post(self, request):
+        player_tg_id = request.data.get('player_tg_id')
+        if not player_tg_id:
+            return Response({"error": "Telegram ID пользователя не указан."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            player = Player.objects.get(tg_id=player_tg_id)
+        except Player.DoesNotExist:
+            return Response({"error": "Игрок с таким Telegram ID не найден."}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            task_tg_channel = player.players_task.get(id=4)
+            task_tg_group = player.players_task.get(id=3)
+        except TaskPlayer.DoesNotExist:
+            return Response({"error": "Задачи с указанными ID не найдены."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Проверяем подписку на канал и группу
+        is_in_channel = is_user_in_chat(player_tg_id, CHANNEL_ID, TOKEN)
+        is_in_group = is_user_in_chat(player_tg_id, GROUP_ID, TOKEN)
+
+        if is_in_channel and is_in_group:
+            # Обновляем поле completed на True для обоих задач
+            task_tg_channel.completed = True
+            task_tg_group.completed = True
+            task_tg_channel.save()
+            task_tg_group.save()
+            return Response({"message": "Пользователь подписан на канал и группу."}, status=status.HTTP_200_OK)
+        elif is_in_channel:
+            # Обновляем поле completed на True для задачи канала
+            task_tg_channel.completed = True
+            task_tg_channel.save()
+            return Response({"message": "Пользователь подписан только на канал."}, status=status.HTTP_200_OK)
+        elif is_in_group:
+            # Обновляем поле completed на True для задачи группы
+            task_tg_group.completed = True
+            task_tg_group.save()
+            return Response({"message": "Пользователь подписан только на группу."}, status=status.HTTP_200_OK)
+        else:
+            return Response({"message": "Пользователь не подписан ни на канал, ни на группу."},
+                            status=status.HTTP_200_OK)

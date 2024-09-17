@@ -9,6 +9,8 @@ from aiogram.client.default import DefaultBotProperties
 
 # Bot token can be obtained via https://t.me/BotFather
 TOKEN = '7030157523:AAGMIwyc9UVtOJJLT755NYIGsL1EtTdLIWI'
+CHANNEL_ID = "@your_channel_id"  # канал - https://t.me/+1ra3FBxddrQ3NjE0
+GROUP_ID = "@your_group_id"  # Группа - https://t.me/+w2xMi4_oay8xMWQ0
 
 # Initialize Bot instance with default bot properties which will be passed to all API calls
 bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))

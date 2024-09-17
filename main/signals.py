@@ -37,7 +37,7 @@ def my_changed_flag_autobot(sender, instance, created, **kwargs):
             instance.save(update_fields=['flag_autobot'])
 
 
-@receiver(pre_save, sender=Player)
+@receiver(post_save, sender=Player)
 def set_default_league(sender, instance, **kwargs):
     """Задаём дефолтное значение лиги при создании нового игрока."""
     if not instance.league:
@@ -52,7 +52,7 @@ def set_default_league(sender, instance, **kwargs):
                 league_skin.is_active = True
                 instance.skins.add(league_skin)
 
-            logger.debug(f'League set to default league: {default_league} for player {instance.id}')
+            logger.debug(f'League set to default league: {default_league} for player {instance.pk}')
         else:
             logger.debug(f'No default league found with min_coin=1000')
 
