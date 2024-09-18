@@ -59,9 +59,11 @@ def update_league_task(instance_id):
                 instance.league = league
                 instance.lvl += 1
                 # Делаем скин принадлежащий лиги доступным
-                league_skin = LeagueSkins.objects.filter(player=instance, league=league).first()
+                league_skin = Skin.objects.filter(player=instance, league=league).first()
                 if league_skin:
+                    Skin.objects.filter(player=instance).update(is_active=False)
                     league_skin.available_skin = True
+                    league_skin.is_active = True
                     league_skin.save()
         else:
             break

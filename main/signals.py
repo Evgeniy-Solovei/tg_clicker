@@ -37,7 +37,7 @@ def my_changed_flag_autobot(sender, instance, created, **kwargs):
             instance.save(update_fields=['flag_autobot'])
 
 
-@receiver(pre_save, sender=Player)
+@receiver(post_save, sender=Player)
 def set_default_league(sender, instance, **kwargs):
     """Задаём дефолтное значение лиги при создании нового игрока."""
     if not instance.league:
@@ -45,7 +45,14 @@ def set_default_league(sender, instance, **kwargs):
         default_league = League.objects.filter(min_coin=1000).first()
         if default_league:
             instance.league = default_league
-            logger.debug(f'League set to default league: {default_league} for player {instance.id}')
+            # Проверяем наличие скина, связанного с этой лигой
+            league_skin = Skin.objects.filter(league=default_league).first()
+            if league_skin:
+                league_skin.available_skin = True
+                league_skin.is_active = True
+                instance.skins.add(league_skin)
+
+            logger.debug(f'League set to default league: {default_league} for player {instance.pk}')
         else:
             logger.debug(f'No default league found with min_coin=1000')
 
@@ -82,18 +89,20 @@ def assign_task_to_all_players(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=TaskPlayer)
 def check_task_completion(sender, instance, **kwargs):
-    """Проверяем выполнено ли определённое количество задач и даём доступ к заданию по добавлению друзей"""
+    """Проверяем выполнено ли определённое количество задач и даём доступ к сундукам"""
     instance.check_completion()
     if instance.completed:
         player = instance.player.first()  # Получаем первого игрока из связанных
         if player:
             completed_tasks_count = TaskPlayer.objects.filter(player=player, completed=True).count()
-
-            if completed_tasks_count >= 1:
-                invite_friends_task = TaskPlayer.objects.get(description='add_friends', player=player)
-                invite_friends_task.is_active = True
-                invite_friends_task.save()
-
-            if completed_tasks_count >= 2:
-                player.boxes_available = True
+            if completed_tasks_count >= 4:
+                player.tasks = True
                 player.save()
+            # Проверка, достиг ли кто-то из приглашённых игроков уровня 2
+            referrals = ReferralSystem.objects.filter(referral=player)
+            for referral in referrals:
+                if referral.new_player.lvl >= 2:
+                    player.friend_lvl_2 = True
+                    player.boxes_available = True
+                    player.save()
+                    break

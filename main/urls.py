@@ -26,4 +26,5 @@ urlpatterns = [
     path('tasks/<int:tg_id>/', TaskPlayerDetailView.as_view(), name='task-player-list'),
     path('task/<int:tg_id>/<str:description>/', TaskPlayerDetailView.as_view(), name='task-player-detail'),
     path('task/<int:tg_id>/<str:description>/start/', StartTaskView.as_view(), name='task-player-start'),
+    path('task_tg/<int:tg_id>/', CheckSubscriptionView.as_view(), name='task-player-tg'),
 ]
