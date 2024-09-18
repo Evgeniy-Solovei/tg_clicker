@@ -129,6 +129,7 @@ class TaskPlayer(models.Model):
         if self.start_time and timezone.now() >= self.start_time + timedelta(minutes=1):
             if not self.completed:  # Избегаем лишнего сохранения, если задача уже завершена
                 self.completed = True
+                self.start_time = None
                 self.save()
                 for player in self.player.all():
                     if self.id == 5:  # Для добавления друзей id 5
