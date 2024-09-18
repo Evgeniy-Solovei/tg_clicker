@@ -577,3 +577,12 @@ class CheckSubscriptionView(APIView):
         else:
             return Response({"message": "Пользователь не подписан ни на канал, ни на группу."},
                             status=status.HTTP_200_OK)
+
+
+class InstructionUserView(APIView):
+    """Отменяем показ инструкции"""
+    def get(self, request, tg_id):
+        player = get_object_or_404(Player, tg_id=tg_id)
+        player.show_instruction = False
+        player.save()
+        return Response({"message": "Пользователь ознакомился с инструкцией."},status=status.HTTP_200_OK)

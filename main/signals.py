@@ -62,8 +62,6 @@ def update_league(sender, instance, **kwargs):
     """Сигнал об изменении монет"""
     update_fields = kwargs.get('update_fields')
     if update_fields and 'coin' in update_fields:
-        # Изменяем флаг на False после сохранения, что бы юзер больше не видел инструкцию
-        instance.show_instruction = False
         instance.save()
         update_league_task(instance.id,)
 
