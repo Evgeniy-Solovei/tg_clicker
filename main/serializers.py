@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from main.models import League, Player, TaskPlayer, Skin
+from main.models import League, Player, TaskPlayer, Skin, PlayerTask
 
 
 class PlayerSerializer(serializers.ModelSerializer):
@@ -49,6 +49,13 @@ class TaskPlayerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TaskPlayer
-        fields = ['id', 'name', 'description', 'link', 'completed', 'start_time']
+        fields = ['id', 'name', 'description', 'link']
 
 
+class PlayerTaskSerializer(serializers.ModelSerializer):
+    """Сериализатор для модели TaskPlayer"""
+    task = TaskPlayerSerializer(read_only=True)
+
+    class Meta:
+        model = PlayerTask
+        fields = ['task', 'id', 'completed', 'start_time', 'add_flag']

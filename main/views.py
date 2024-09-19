@@ -11,7 +11,7 @@ from telegram import TOKEN, CHANNEL_ID, GROUP_ID
 from .models import *
 from django.shortcuts import get_object_or_404
 import logging
-from .serializers import LeaguesSerializer, TaskPlayerSerializer, SkinSerializer
+from .serializers import LeaguesSerializer, TaskPlayerSerializer, SkinSerializer, PlayerTaskSerializer
 
 
 class Main_info(APIView):
@@ -477,24 +477,24 @@ class TaskPlayerDetailView(APIView):
         """Получаем информацию о всех задачах или об одной"""
         player = get_object_or_404(Player, tg_id=tg_id)
         if description:
-            tasks = TaskPlayer.objects.filter(player=player, description=description)
+            tasks = PlayerTask.objects.filter(player=player, task__description=description)
         else:
-            tasks = TaskPlayer.objects.filter(player=player).order_by('-completed', 'id')
+            tasks = PlayerTask.objects.filter(player=player).order_by('-completed', 'id')
 
         # Проверяем, что tasks является queryset'ом
         if not tasks.exists():
             return Response({"detail": "Задачи не найдены"}, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = TaskPlayerSerializer(tasks, many=True)
+        serializer = PlayerTaskSerializer(tasks, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request, tg_id, description):
         """Проверяем прошло ли 30 минут что бы задача считалась выполненная"""
         if tg_id and description:
             player = get_object_or_404(Player, tg_id=tg_id)
-            tasks = TaskPlayer.objects.filter(player=player, description=description)
+            tasks = PlayerTask.objects.filter(player=player, task__description=description)
             task = tasks.first()
-            serializer = TaskPlayerSerializer(task, data=request.data, partial=True)
+            serializer = PlayerTaskSerializer(task, data=request.data, partial=True)
             if serializer.is_valid():
                 serializer.save()
                 task.check_completion()
@@ -508,9 +508,11 @@ class StartTaskView(APIView):
     def post(self, request, tg_id, description):
         """Запуск таймера после перехода на ссылку"""
         player = get_object_or_404(Player, tg_id=tg_id)
-        tasks = TaskPlayer.objects.filter(player=player, description=description)
+        tasks = PlayerTask.objects.filter(player=player, task__description=description)
         task = tasks.first()
-        serializer = TaskPlayerSerializer(task, data=request.data, partial=True)
+        if task.completed:
+            return Response({"error": "Задача уже завершена."}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = PlayerTaskSerializer(task, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             task.start_task_player()  # Запуск таймера выполнения задачи
@@ -581,7 +583,7 @@ class CheckSubscriptionView(APIView):
 
 class InstructionUserView(APIView):
     """Отменяем показ инструкции"""
-    def get(self, request, tg_id):
+    def post(self, request, tg_id):
         player = get_object_or_404(Player, tg_id=tg_id)
         player.show_instruction = False
         player.save()

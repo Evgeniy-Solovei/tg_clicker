@@ -66,33 +66,43 @@ def update_league(sender, instance, **kwargs):
         update_league_task(instance.id,)
 
 
+# @receiver(post_save, sender=Player)
+# def assign_existing_tasks_to_player(sender, instance, created, **kwargs):
+#     """Присваиваем все существующие задачи и скины игроку при создании нового игрока."""
+#     if created:
+#         tasks = TaskPlayer.objects.all()
+#         instance.players_task.set(tasks)
+#         skins = Skin.objects.all()
+#         instance.skins.set(skins)
+
+
 @receiver(post_save, sender=Player)
 def assign_existing_tasks_to_player(sender, instance, created, **kwargs):
-    """Присваиваем все существующие задачи и скины игроку при создании нового игрока."""
+    """Присваиваем все существующие задачи игроку при создании нового игрока."""
     if created:
         tasks = TaskPlayer.objects.all()
-        instance.players_task.set(tasks)
-        skins = Skin.objects.all()
-        instance.skins.set(skins)
+        for task in tasks:
+            player_task = PlayerTask.objects.create(player=instance, task=task)
+            player_task.save()
 
 
 @receiver(post_save, sender=TaskPlayer)
 def assign_task_to_all_players(sender, instance, created, **kwargs):
-    """Присваиваем новую задачу, всем существующим игрокам"""
+    """Присваиваем новую задачу всем существующим игрокам."""
     if created:
-        players = Player.objects.all()  # Получаем всех игроков
-        instance.player.set(players)  # Присваиваем всех игроков задаче
-        instance.save()
+        players = Player.objects.all()
+        player_tasks = [PlayerTask(player=player, task=instance) for player in players]
+        PlayerTask.objects.bulk_create(player_tasks)
 
 
-@receiver(post_save, sender=TaskPlayer)
+@receiver(post_save, sender=PlayerTask)
 def check_task_completion(sender, instance, **kwargs):
     """Проверяем выполнено ли определённое количество задач и даём доступ к сундукам"""
     instance.check_completion()
     if instance.completed:
-        player = instance.player.first()  # Получаем первого игрока из связанных
+        player = instance.player
         if player:
-            completed_tasks_count = TaskPlayer.objects.filter(player=player, completed=True).count()
+            completed_tasks_count = PlayerTask.objects.filter(player=player, completed=True).count()
             if completed_tasks_count >= 4:
                 player.tasks = True
                 player.save()

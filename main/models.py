@@ -116,13 +116,21 @@ class Skin(models.Model):
 
 
 class TaskPlayer(models.Model):
-    player = models.ManyToManyField(Player, related_name='players_task', blank=True, verbose_name='Игрок')
-    name = models.CharField(max_length=20, verbose_name='Название задачи', default='')
+    name = models.CharField(max_length=50,blank=True, null=True, verbose_name='Название задачи', default='')
     description = models.CharField(max_length=100, default='', verbose_name='Описание задачи')
     link = models.URLField(blank=True, null=True, verbose_name='Ссылка на аккаунт для выполнения задания')
-    completed = models.BooleanField(default=False, verbose_name='Выполнено/не выполнено')
     is_active = models.BooleanField(default=True, verbose_name="Активна/неактивна")
+
+    def __str__(self):
+        return self.name
+
+
+class PlayerTask(models.Model):
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='task_player', verbose_name='Игрок', null=True)
+    task = models.ForeignKey(TaskPlayer, on_delete=models.CASCADE,  related_name='player_tasks', verbose_name='Задача', null=True)
+    completed = models.BooleanField(default=False, verbose_name='Выполнено/не выполнено')
     start_time = models.DateTimeField(null=True, blank=True, verbose_name='Старт выполнения задачи')
+    add_flag = models.BooleanField(default=False, verbose_name='Доп. флаг')
 
     def check_completion(self):
         """Проверяем прошло ли 30 минут и зачитываем выполнение задачи"""
@@ -131,17 +139,13 @@ class TaskPlayer(models.Model):
                 self.completed = True
                 self.start_time = None
                 self.save()
-                for player in self.player.all():
-                    if self.id == 5:  # Для добавления друзей id 5
-                        player.crystal += 10  # Начисляем 10 кристаллов
-                    else:
-                        player.coin += 5000  # Для всех остальных задач начисляем 5000 монет
-                    player.save()
+                if self.task.id == 5:  # Для добавления друзей id 5
+                    self.player.crystal += 10  # Начисляем 10 кристаллов
+                else:
+                    self.player.coin += 5000  # Для всех остальных задач начисляем 5000 монет
+                self.player.save()
 
     def start_task_player(self):
         """При вызове представления, задаём полю значение начало выполнение задачи"""
         self.start_time = timezone.now()
         self.save()
-
-    # Поле для добавление друзей должно быть такое description = 'add_friends'
-
