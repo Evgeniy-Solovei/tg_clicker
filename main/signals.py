@@ -45,12 +45,14 @@ def set_default_league(sender, instance, **kwargs):
         default_league = League.objects.filter(min_coin=1000).first()
         if default_league:
             instance.league = default_league
+            instance.save()
             # Проверяем наличие скина, связанного с этой лигой
             league_skin = Skin.objects.filter(league=default_league).first()
             if league_skin:
-                league_skin.available_skin = True
-                league_skin.is_active = True
-                instance.skins.add(league_skin)
+                player_skin, created = PlayerSkin.objects.get_or_create(player=instance, skin=league_skin)
+                player_skin.available_skin = True
+                player_skin.is_active = True
+                player_skin.save()
 
             logger.debug(f'League set to default league: {default_league} for player {instance.pk}')
         else:
@@ -78,12 +80,15 @@ def update_league(sender, instance, **kwargs):
 
 @receiver(post_save, sender=Player)
 def assign_existing_tasks_to_player(sender, instance, created, **kwargs):
-    """Присваиваем все существующие задачи игроку при создании нового игрока."""
+    """Присваиваем все существующие задачи и скины игроку при создании нового игрока."""
     if created:
         tasks = TaskPlayer.objects.all()
         for task in tasks:
             player_task = PlayerTask.objects.create(player=instance, task=task)
             player_task.save()
+        skins = Skin.objects.all()
+        for skin in skins:
+            PlayerSkin.objects.create(player=instance, skin=skin, available_skin=False, is_active=False)
 
 
 @receiver(post_save, sender=TaskPlayer)
@@ -93,6 +98,9 @@ def assign_task_to_all_players(sender, instance, created, **kwargs):
         players = Player.objects.all()
         player_tasks = [PlayerTask(player=player, task=instance) for player in players]
         PlayerTask.objects.bulk_create(player_tasks)
+        skins = Skin.objects.all()
+        player_skins = [PlayerSkin(player=instance, skin=skin, available_skin=False, is_active=False) for skin in skins]
+        PlayerSkin.objects.bulk_create(player_skins)
 
 
 @receiver(post_save, sender=PlayerTask)

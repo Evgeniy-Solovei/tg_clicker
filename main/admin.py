@@ -54,3 +54,8 @@ class TaskPlayerAdmin(admin.ModelAdmin):
 @admin.register(PlayerTask)
 class PlayerTaskAdmin(admin.ModelAdmin):
     pass
+
+
+@admin.register(PlayerSkin)
+class PlayerSkinAdmin(admin.ModelAdmin):
+    pass
