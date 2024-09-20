@@ -45,12 +45,14 @@ def set_default_league(sender, instance, **kwargs):
         default_league = League.objects.filter(min_coin=1000).first()
         if default_league:
             instance.league = default_league
+            instance.save()
             # Проверяем наличие скина, связанного с этой лигой
             league_skin = Skin.objects.filter(league=default_league).first()
             if league_skin:
-                league_skin.available_skin = True
-                league_skin.is_active = True
-                instance.skins.add(league_skin)
+                player_skin, created = PlayerSkin.objects.get_or_create(player=instance, skin=league_skin)
+                player_skin.available_skin = True
+                player_skin.is_active = True
+                player_skin.save()
 
             logger.debug(f'League set to default league: {default_league} for player {instance.pk}')
         else:
@@ -62,10 +64,18 @@ def update_league(sender, instance, **kwargs):
     """Сигнал об изменении монет"""
     update_fields = kwargs.get('update_fields')
     if update_fields and 'coin' in update_fields:
-        # Изменяем флаг на False после сохранения, что бы юзер больше не видел инструкцию
-        instance.show_instruction = False
         instance.save()
         update_league_task(instance.id,)
+
+
+# @receiver(post_save, sender=Player)
+# def assign_existing_tasks_to_player(sender, instance, created, **kwargs):
+#     """Присваиваем все существующие задачи и скины игроку при создании нового игрока."""
+#     if created:
+#         tasks = TaskPlayer.objects.all()
+#         instance.players_task.set(tasks)
+#         skins = Skin.objects.all()
+#         instance.skins.set(skins)
 
 
 @receiver(post_save, sender=Player)
@@ -73,28 +83,34 @@ def assign_existing_tasks_to_player(sender, instance, created, **kwargs):
     """Присваиваем все существующие задачи и скины игроку при создании нового игрока."""
     if created:
         tasks = TaskPlayer.objects.all()
-        instance.players_task.set(tasks)
+        for task in tasks:
+            player_task = PlayerTask.objects.create(player=instance, task=task)
+            player_task.save()
         skins = Skin.objects.all()
-        instance.skins.set(skins)
+        for skin in skins:
+            PlayerSkin.objects.create(player=instance, skin=skin, available_skin=False, is_active=False)
 
 
 @receiver(post_save, sender=TaskPlayer)
 def assign_task_to_all_players(sender, instance, created, **kwargs):
-    """Присваиваем новую задачу, всем существующим игрокам"""
+    """Присваиваем новую задачу всем существующим игрокам."""
     if created:
-        players = Player.objects.all()  # Получаем всех игроков
-        instance.player.set(players)  # Присваиваем всех игроков задаче
-        instance.save()
+        players = Player.objects.all()
+        player_tasks = [PlayerTask(player=player, task=instance) for player in players]
+        PlayerTask.objects.bulk_create(player_tasks)
+        skins = Skin.objects.all()
+        player_skins = [PlayerSkin(player=instance, skin=skin, available_skin=False, is_active=False) for skin in skins]
+        PlayerSkin.objects.bulk_create(player_skins)
 
 
-@receiver(post_save, sender=TaskPlayer)
+@receiver(post_save, sender=PlayerTask)
 def check_task_completion(sender, instance, **kwargs):
     """Проверяем выполнено ли определённое количество задач и даём доступ к сундукам"""
     instance.check_completion()
     if instance.completed:
-        player = instance.player.first()  # Получаем первого игрока из связанных
+        player = instance.player
         if player:
-            completed_tasks_count = TaskPlayer.objects.filter(player=player, completed=True).count()
+            completed_tasks_count = PlayerTask.objects.filter(player=player, completed=True).count()
             if completed_tasks_count >= 4:
                 player.tasks = True
                 player.save()

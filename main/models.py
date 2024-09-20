@@ -100,47 +100,56 @@ class Skin(models.Model):
         PLAYER = 'player', 'Сундук'
         LEAGUE = 'league', 'Лига'
 
-    player = models.ManyToManyField(Player, blank=True, related_name='skins', verbose_name="Игрок")
     prizes = models.ManyToManyField(Prize, blank=True, related_name='skins', verbose_name="Призы")
     league = models.OneToOneField(League, on_delete=models.CASCADE, related_name='skin', verbose_name="Лига скина",
                                   null=True, blank=True)
     id_prize = models.IntegerField(null=True, blank=True, verbose_name="ID приза из БД")
     name = models.CharField(max_length=30, default='', verbose_name='Название скина')
     description = models.CharField(max_length=100, default='', verbose_name='Описание скина')
-    available_skin = models.BooleanField(default=False, verbose_name='Доступен/недоступен пользователю')
-    is_active = models.BooleanField(default=False, verbose_name='Нынешний скин')
     skin_type = models.CharField(max_length=10, choices=SkinType.choices, default=SkinType.PLAYER, verbose_name='Тип скина')
 
     def __str__(self):
         return self.name
 
 
+class PlayerSkin(models.Model):
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='player_skins', verbose_name="Игрок")
+    skin = models.ForeignKey(Skin, on_delete=models.CASCADE, related_name='player_skins', verbose_name="Скин")
+    available_skin = models.BooleanField(default=False, verbose_name='Доступен/недоступен пользователю')
+    is_active = models.BooleanField(default=False, verbose_name='Нынешний скин')
+
+
 class TaskPlayer(models.Model):
-    player = models.ManyToManyField(Player, related_name='players_task', blank=True, verbose_name='Игрок')
-    name = models.CharField(max_length=20, verbose_name='Название задачи', default='')
+    name = models.CharField(max_length=50,blank=True, null=True, verbose_name='Название задачи', default='')
     description = models.CharField(max_length=100, default='', verbose_name='Описание задачи')
     link = models.URLField(blank=True, null=True, verbose_name='Ссылка на аккаунт для выполнения задания')
-    completed = models.BooleanField(default=False, verbose_name='Выполнено/не выполнено')
     is_active = models.BooleanField(default=True, verbose_name="Активна/неактивна")
+
+    def __str__(self):
+        return self.name
+
+
+class PlayerTask(models.Model):
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='task_player', verbose_name='Игрок', null=True)
+    task = models.ForeignKey(TaskPlayer, on_delete=models.CASCADE,  related_name='player_tasks', verbose_name='Задача', null=True)
+    completed = models.BooleanField(default=False, verbose_name='Выполнено/не выполнено')
     start_time = models.DateTimeField(null=True, blank=True, verbose_name='Старт выполнения задачи')
+    add_flag = models.BooleanField(default=False, verbose_name='Доп. флаг')
 
     def check_completion(self):
         """Проверяем прошло ли 30 минут и зачитываем выполнение задачи"""
         if self.start_time and timezone.now() >= self.start_time + timedelta(minutes=1):
             if not self.completed:  # Избегаем лишнего сохранения, если задача уже завершена
                 self.completed = True
+                self.start_time = None
                 self.save()
-                for player in self.player.all():
-                    if self.id == 5:  # Для добавления друзей id 5
-                        player.crystal += 10  # Начисляем 10 кристаллов
-                    else:
-                        player.coin += 5000  # Для всех остальных задач начисляем 5000 монет
-                    player.save()
+                if self.task.id == 5:  # Для добавления друзей id 5
+                    self.player.crystal += 10  # Начисляем 10 кристаллов
+                else:
+                    self.player.coin += 5000  # Для всех остальных задач начисляем 5000 монет
+                self.player.save()
 
     def start_task_player(self):
         """При вызове представления, задаём полю значение начало выполнение задачи"""
         self.start_time = timezone.now()
         self.save()
-
-    # Поле для добавление друзей должно быть такое description = 'add_friends'
-

@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from main.models import League, Player, TaskPlayer, Skin
+from main.models import League, Player, TaskPlayer, Skin, PlayerTask, PlayerSkin
 
 
 class PlayerSerializer(serializers.ModelSerializer):
@@ -28,7 +28,15 @@ class SkinSerializer(serializers.ModelSerializer):
     """Сериализатор для модели Skin"""
     class Meta:
         model = Skin
-        fields = ['id', 'prizes', 'league', 'id_prize', 'name', 'description', 'available_skin', 'is_active', 'skin_type']
+        fields = ['id', 'prizes', 'league', 'id_prize', 'name', 'description', 'skin_type']
+
+
+class PlayerSkinSerializer(serializers.ModelSerializer):
+    skin = SkinSerializer()
+    """Сериализатор для модели PlayerSkin"""
+    class Meta:
+        model = PlayerSkin
+        fields = ['skin', 'available_skin', 'is_active']
 
 
 # class PlayerSkinsSerializer(serializers.ModelSerializer):
@@ -49,6 +57,13 @@ class TaskPlayerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TaskPlayer
-        fields = ['id', 'name', 'description', 'link', 'completed', 'is_active', 'start_time']
+        fields = ['id', 'name', 'description', 'link']
 
 
+class PlayerTaskSerializer(serializers.ModelSerializer):
+    """Сериализатор для модели TaskPlayer"""
+    task = TaskPlayerSerializer(read_only=True)
+
+    class Meta:
+        model = PlayerTask
+        fields = ['task', 'id', 'completed', 'start_time', 'add_flag']
