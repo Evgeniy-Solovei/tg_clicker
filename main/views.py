@@ -425,7 +425,7 @@ class TaskPlayerDetailView(APIView):
         if description:
             tasks = PlayerTask.objects.filter(player=player, task__description=description)
         else:
-            tasks = PlayerTask.objects.filter(player=player).order_by('-completed', 'id')
+            tasks = PlayerTask.objects.filter(player=player).order_by('completed', 'id')
 
         # Проверяем, что tasks является queryset'ом
         if not tasks.exists():
