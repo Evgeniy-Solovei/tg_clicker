@@ -86,8 +86,11 @@ def assign_existing_tasks_to_player(sender, instance, created, **kwargs):
         for task in tasks:
             player_task = PlayerTask.objects.create(player=instance, task=task)
             player_task.save()
-        skins = Skin.objects.all()
-        for skin in skins:
+        # Получаем все скины, которые не связаны с лигой игрока (чтобы исключить активный скин)
+        active_skins = PlayerSkin.objects.filter(player=instance).values_list('skin_id', flat=True)
+        skins_to_add = Skin.objects.exclude(id__in=active_skins)
+        # Добавляем только те скины, которых у игрока еще нет
+        for skin in skins_to_add:
             PlayerSkin.objects.create(player=instance, skin=skin, available_skin=False, is_active=False)
 
 
