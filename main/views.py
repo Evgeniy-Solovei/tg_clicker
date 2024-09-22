@@ -22,9 +22,7 @@ class Main_info(APIView):
             Upgrade.objects.create(player=player)
 
         # Вычисляем текущий бонус на основе damage и autobot_time
-        current_bonus = 0
-        if player.upgrade.autobot_time == 0:
-            current_bonus = player.upgrade.damage * (player.upgrade.autobot_time // 2)
+        current_bonus = player.upgrade.autobot_time * player.upgrade.damage + player.upgrade.coin_bonus_result
         # Получаем активный скин игрока
         active_skin = PlayerSkin.objects.filter(player=player, is_active=True).first()
         active_skin_id = active_skin.skin.id if active_skin else None
