@@ -513,8 +513,8 @@ class CheckSubscriptionView(APIView):
             return Response({"error": "Игрок с таким Telegram ID не найден."}, status=status.HTTP_404_NOT_FOUND)
 
         try:
-            task_tg_channel = player.players_task.get(id=4)
-            task_tg_group = player.players_task.get(id=3)
+            task_tg_channel = player.task_player.get(id=4)
+            task_tg_group = player.task_player.get(id=3)
         except TaskPlayer.DoesNotExist:
             return Response({"error": "Задачи с указанными ID не найдены."}, status=status.HTTP_404_NOT_FOUND)
 
