@@ -49,7 +49,8 @@ class SkinAdmin(admin.ModelAdmin):
 
 @admin.register(TaskPlayer)
 class TaskPlayerAdmin(admin.ModelAdmin):
-    pass
+    list_display = ["id", "name", "description", "link", "is_active"]
+
 
 @admin.register(PlayerTask)
 class PlayerTaskAdmin(admin.ModelAdmin):

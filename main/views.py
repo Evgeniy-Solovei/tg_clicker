@@ -324,17 +324,17 @@ class TakinReferralBonus(APIView):
         if system.referral == person and system.referral_bonus == True:
             system.referral_bonus = False
             system.save()
-            person.crystal += 1000
+            person.crystal += 50
             person.save()
             return Response({
-                'referral': 'Получил 1000 кристаллов'})
+                'referral': 'Получил 50 кристаллов'})
         if system.new_player == person and system.new_player_bonus == True:
             system.new_player_bonus = False
             system.save()
-            system.new_player.crystal += 500
+            system.new_player.crystal += 10
             system.new_player.save()
             return Response({
-                'new_player': 'Получил 500 кристаллов'})
+                'new_player': 'Получил 10 кристаллов'})
         else:
             return Response({'Error': "Вы уже получали бонус"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -484,6 +484,23 @@ def is_user_in_chat(user_tg_id, chat_id, TOKEN):
     return False
 
 
+class TaskTelegram(APIView):
+    def post(self, request, tg_id, description):
+        """Запуск выполнения задачи после перехода по ссылке"""
+        player = get_object_or_404(Player, tg_id=tg_id)
+        tasks = PlayerTask.objects.filter(player=player, task__description=description)
+        task = tasks.first()
+        if task.completed:
+            return Response({"error": "Задача уже завершена."}, status=status.HTTP_400_BAD_REQUEST)
+        task.start_time = timezone.now()
+        task.save()
+        serializer = PlayerTaskSerializer(task, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 class CheckSubscriptionView(APIView):
     def post(self, request):
         player_tg_id = request.data.get('player_tg_id')
@@ -494,12 +511,20 @@ class CheckSubscriptionView(APIView):
             player = Player.objects.get(tg_id=player_tg_id)
         except Player.DoesNotExist:
             return Response({"error": "Игрок с таким Telegram ID не найден."}, status=status.HTTP_404_NOT_FOUND)
-
+        # Получите TaskPlayer по его id
         try:
-            task_tg_channel = player.players_task.get(id=4)
-            task_tg_group = player.players_task.get(id=3)
+            task_player = TaskPlayer.objects.get(id=4)
+            task_player_2 = TaskPlayer.objects.get(id=3)
         except TaskPlayer.DoesNotExist:
-            return Response({"error": "Задачи с указанными ID не найдены."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "Задача игрока с указанным ID не найден."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Получите PlayerTask для конкретного игрока и задачи
+        try:
+            task_tg_channel = PlayerTask.objects.get(player=player, task=task_player)
+            task_tg_group = PlayerTask.objects.get(player=player, task=task_player_2)
+        except PlayerTask.DoesNotExist:
+            return Response({"error": "PlayerTask для этого игрока и задачи не найден."},
+                            status=status.HTTP_404_NOT_FOUND)
 
         # Проверяем подписку на канал и группу
         is_in_channel = is_user_in_chat(player_tg_id, CHANNEL_ID, TOKEN)
@@ -508,20 +533,27 @@ class CheckSubscriptionView(APIView):
         if is_in_channel and is_in_group:
             # Обновляем поле completed на True для обоих задач
             task_tg_channel.completed = True
+            task_tg_channel.start_time = None
             task_tg_group.completed = True
+            task_tg_group.start_time = None
             task_tg_channel.save()
             task_tg_group.save()
-            return Response({"message": "Пользователь подписан на канал и группу."}, status=status.HTTP_200_OK)
+            message = f"Пользователь подписан на канал и группу. task_tg_channel_start_time: {task_tg_channel.start_time}, task_tg_group_start_time: {task_tg_group.start_time}"
+            return Response({"message": message}, status=status.HTTP_200_OK)
         elif is_in_channel:
             # Обновляем поле completed на True для задачи канала
             task_tg_channel.completed = True
+            task_tg_channel.start_time = None
             task_tg_channel.save()
-            return Response({"message": "Пользователь подписан только на канал."}, status=status.HTTP_200_OK)
+            message = f"Пользователь подписан только на канал. task_tg_channel_start_time: {task_tg_channel.start_time}, task_tg_group_start_time: {task_tg_group.start_time}"
+            return Response({"message": message}, status=status.HTTP_200_OK)
         elif is_in_group:
             # Обновляем поле completed на True для задачи группы
             task_tg_group.completed = True
+            task_tg_group.start_time = None
             task_tg_group.save()
-            return Response({"message": "Пользователь подписан только на группу."}, status=status.HTTP_200_OK)
+            message = f"Пользователь подписан только на группу. task_tg_channel_start_time: {task_tg_channel.start_time}, task_tg_group_start_time: {task_tg_group.start_time}"
+            return Response({"message": message}, status=status.HTTP_200_OK)
         else:
             return Response({"message": "Пользователь не подписан ни на канал, ни на группу."},
                             status=status.HTTP_200_OK)
