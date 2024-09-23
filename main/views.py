@@ -324,17 +324,17 @@ class TakinReferralBonus(APIView):
         if system.referral == person and system.referral_bonus == True:
             system.referral_bonus = False
             system.save()
-            person.crystal += 1000
+            person.crystal += 50
             person.save()
             return Response({
-                'referral': 'Получил 1000 кристаллов'})
+                'referral': 'Получил 50 кристаллов'})
         if system.new_player == person and system.new_player_bonus == True:
             system.new_player_bonus = False
             system.save()
-            system.new_player.crystal += 500
+            system.new_player.crystal += 10
             system.new_player.save()
             return Response({
-                'new_player': 'Получил 500 кристаллов'})
+                'new_player': 'Получил 10 кристаллов'})
         else:
             return Response({'Error': "Вы уже получали бонус"}, status=status.HTTP_400_BAD_REQUEST)
 
