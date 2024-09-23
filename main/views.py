@@ -511,12 +511,20 @@ class CheckSubscriptionView(APIView):
             player = Player.objects.get(tg_id=player_tg_id)
         except Player.DoesNotExist:
             return Response({"error": "Игрок с таким Telegram ID не найден."}, status=status.HTTP_404_NOT_FOUND)
-
+        # Получите TaskPlayer по его id
         try:
-            task_tg_channel = player.task_player.get(id=4)
-            task_tg_group = player.task_player.get(id=3)
+            task_player = TaskPlayer.objects.get(id=4)
+            task_player_2 = TaskPlayer.objects.get(id=3)
         except TaskPlayer.DoesNotExist:
-            return Response({"error": "Задачи с указанными ID не найдены."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "Задача игрока с указанным ID не найден."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Получите PlayerTask для конкретного игрока и задачи
+        try:
+            task_tg_channel = PlayerTask.objects.get(player=player, task=task_player)
+            task_tg_group = PlayerTask.objects.get(player=player, task=task_player_2)
+        except PlayerTask.DoesNotExist:
+            return Response({"error": "PlayerTask для этого игрока и задачи не найден."},
+                            status=status.HTTP_404_NOT_FOUND)
 
         # Проверяем подписку на канал и группу
         is_in_channel = is_user_in_chat(player_tg_id, CHANNEL_ID, TOKEN)
