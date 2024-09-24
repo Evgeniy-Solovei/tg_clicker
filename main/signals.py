@@ -114,6 +114,7 @@ def check_task_completion(sender, instance, **kwargs):
         player = instance.player
         if player:
             completed_tasks_count = PlayerTask.objects.filter(player=player, completed=True).count()
+            print(completed_tasks_count)
             if completed_tasks_count >= 4:
                 player.tasks = True
                 player.save()

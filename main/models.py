@@ -138,8 +138,8 @@ class PlayerTask(models.Model):
 
     def check_completion(self):
         """Проверяем прошло ли 30 минут и зачитываем выполнение задачи"""
-        if self.start_time and timezone.now() >= self.start_time + timedelta(minutes=1):
-            if not self.completed:  # Избегаем лишнего сохранения, если задача уже завершена
+        if not self.completed:  # Избегаем лишнего сохранения, если задача уже завершена
+            if self.start_time and timezone.now() >= self.start_time + timedelta(minutes=1):
                 self.completed = True
                 self.start_time = None
                 self.save()

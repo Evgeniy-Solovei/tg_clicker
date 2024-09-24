@@ -514,48 +514,68 @@ class CheckSubscriptionView(APIView):
         # Получите TaskPlayer по его id
         try:
             task_player = TaskPlayer.objects.get(id=4)
+        except TaskPlayer.DoesNotExist:
+            return Response({"error": "Задача игрока с указанным ID не найден."}, status=status.HTTP_404_NOT_FOUND)
+        # Получите PlayerTask для конкретного игрока и задачи
+        try:
+            task_tg_channel = PlayerTask.objects.get(player=player, task=task_player)
+        except PlayerTask.DoesNotExist:
+            return Response({"error": "PlayerTask для этого игрока и задачи не найден."},
+                            status=status.HTTP_404_NOT_FOUND)
+
+        # Проверяем подписку на канал
+        is_in_channel = is_user_in_chat(player_tg_id, CHANNEL_ID, TOKEN)
+        if is_in_channel:
+            # Обновляем поле completed на True канала ТГ
+            task_tg_channel.completed = True
+            task_tg_channel.start_time = None
+            task_tg_channel.save()
+            player.coin += 5000
+            player.save()
+            message = f"Пользователь подписан на канал."
+            return Response({"message": message}, status=status.HTTP_200_OK)
+        else:
+            return Response({"message": "Пользователь не подписан на канал."},
+                            status=status.HTTP_200_OK)
+
+
+class CheckSubscriptionView2(APIView):
+    def post(self, request):
+        player_tg_id = request.data.get('player_tg_id')
+        if not player_tg_id:
+            return Response({"error": "Telegram ID пользователя не указан."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            player = Player.objects.get(tg_id=player_tg_id)
+        except Player.DoesNotExist:
+            return Response({"error": "Игрок с таким Telegram ID не найден."}, status=status.HTTP_404_NOT_FOUND)
+        # Получите TaskPlayer по его id
+        try:
             task_player_2 = TaskPlayer.objects.get(id=3)
         except TaskPlayer.DoesNotExist:
             return Response({"error": "Задача игрока с указанным ID не найден."}, status=status.HTTP_404_NOT_FOUND)
 
         # Получите PlayerTask для конкретного игрока и задачи
         try:
-            task_tg_channel = PlayerTask.objects.get(player=player, task=task_player)
             task_tg_group = PlayerTask.objects.get(player=player, task=task_player_2)
         except PlayerTask.DoesNotExist:
             return Response({"error": "PlayerTask для этого игрока и задачи не найден."},
                             status=status.HTTP_404_NOT_FOUND)
 
-        # Проверяем подписку на канал и группу
-        is_in_channel = is_user_in_chat(player_tg_id, CHANNEL_ID, TOKEN)
+        # Проверяем подписку на группу
         is_in_group = is_user_in_chat(player_tg_id, GROUP_ID, TOKEN)
 
-        if is_in_channel and is_in_group:
-            # Обновляем поле completed на True для обоих задач
-            task_tg_channel.completed = True
-            task_tg_channel.start_time = None
-            task_tg_group.completed = True
-            task_tg_group.start_time = None
-            task_tg_channel.save()
-            task_tg_group.save()
-            message = f"Пользователь подписан на канал и группу. task_tg_channel_start_time: {task_tg_channel.start_time}, task_tg_group_start_time: {task_tg_group.start_time}"
-            return Response({"message": message}, status=status.HTTP_200_OK)
-        elif is_in_channel:
-            # Обновляем поле completed на True для задачи канала
-            task_tg_channel.completed = True
-            task_tg_channel.start_time = None
-            task_tg_channel.save()
-            message = f"Пользователь подписан только на канал. task_tg_channel_start_time: {task_tg_channel.start_time}, task_tg_group_start_time: {task_tg_group.start_time}"
-            return Response({"message": message}, status=status.HTTP_200_OK)
-        elif is_in_group:
-            # Обновляем поле completed на True для задачи группы
+        if is_in_group:
+            # Обновляем поле completed на True для задачи подписаться на группу в ТГ
             task_tg_group.completed = True
             task_tg_group.start_time = None
             task_tg_group.save()
-            message = f"Пользователь подписан только на группу. task_tg_channel_start_time: {task_tg_channel.start_time}, task_tg_group_start_time: {task_tg_group.start_time}"
+            player.coin += 5000
+            player.save()
+            message = f"Пользователь подписан на группу."
             return Response({"message": message}, status=status.HTTP_200_OK)
         else:
-            return Response({"message": "Пользователь не подписан ни на канал, ни на группу."},
+            return Response({"message": "Пользователь не подписан на группу."},
                             status=status.HTTP_200_OK)
 
 
