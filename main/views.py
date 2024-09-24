@@ -531,7 +531,7 @@ class CheckSubscriptionView(APIView):
             task_tg_channel.start_time = None
             task_tg_channel.save()
             player.coin += 5000
-            player.save()
+            player.save(update_fields=['coin'])
             message = f"Пользователь подписан на канал."
             return Response({"message": message}, status=status.HTTP_200_OK)
         else:
@@ -571,7 +571,7 @@ class CheckSubscriptionView2(APIView):
             task_tg_group.start_time = None
             task_tg_group.save()
             player.coin += 5000
-            player.save()
+            player.save(update_fields=['coin'])
             message = f"Пользователь подписан на группу."
             return Response({"message": message}, status=status.HTTP_200_OK)
         else:

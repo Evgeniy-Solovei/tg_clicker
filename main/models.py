@@ -147,7 +147,7 @@ class PlayerTask(models.Model):
                     self.player.crystal += 10  # Начисляем 10 кристаллов
                 else:
                     self.player.coin += 5000  # Для всех остальных задач начисляем 5000 монет
-                self.player.save()
+                self.player.save(update_fields=['coin'])
 
     def start_task_player(self):
         """При вызове представления, задаём полю значение начало выполнение задачи"""
