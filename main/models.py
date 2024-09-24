@@ -21,6 +21,7 @@ class Player(models.Model):
     show_instruction = models.BooleanField(default=True, verbose_name="Показывать инструкцию")
     tasks = models.BooleanField(default=False, verbose_name="Выполнены ли задачи")
     friend_lvl_2 = models.BooleanField(default=False, verbose_name="Друг выше 2 лвл")
+    is_new = models.BooleanField(default=False, verbose_name='Новый игрок/не новый')
 
     def __str__(self):
         return f"name:{self.name}, tg_id:{self.tg_id}, lvl:{self.lvl}, coins:{self.coin}, id:{self.pk}"
