@@ -151,6 +151,8 @@ CELERY_RESULT_BACKEND = 'django-db'
 CELERY_IMPORTS = ('main.tasks',)
 broker_connection_retry_on_startup = True
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+CELERY_TASK_ACKS_LATE = True
+CELERY_TASK_REJECT_ON_WORKER_LOST = True
 
 CACHES = {
     "default": {

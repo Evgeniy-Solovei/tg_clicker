@@ -3,7 +3,7 @@ from celery import shared_task
 from .models import *
 
 
-@shared_task
+@shared_task(acks_late=True,reject_on_worker_lost=True)
 def energy_task(instance_id):
     task_id = f'energy_task_{instance_id}'
     instance = Player.objects.get(id=instance_id)
@@ -19,7 +19,7 @@ def energy_task(instance_id):
         cache.delete(task_id)
 
 
-@shared_task
+@shared_task(acks_late=True,reject_on_worker_lost=True)
 def flag_autobot_task(instance_id):
     instance = Upgrade.objects.get(id=instance_id)
     task_id = f'energy_task_{instance_id}'
@@ -36,7 +36,7 @@ def flag_autobot_task(instance_id):
         cache.delete(task_id)
 
 
-@shared_task
+@shared_task(acks_late=True,reject_on_worker_lost=True)
 def update_league_task(instance_id):
     """Задача для автоматического изменения лиги пользователей"""
     instance = Player.objects.get(id=instance_id)
