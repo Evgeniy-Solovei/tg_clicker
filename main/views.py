@@ -18,7 +18,7 @@ class Main_info(APIView):
         try:
             player = Player.objects.get(tg_id=tg_id)
         except Player.DoesNotExist:
-            player = Player.objects.create(tg_id=tg_id, name=name)
+            player = Player.objects.create(tg_id=tg_id, name=name, is_new=True)
             Upgrade.objects.create(player=player)
 
         # Вычисляем текущий бонус на основе damage и autobot_time
@@ -267,6 +267,11 @@ class CompleteReferralSystem(APIView):
             new_player = get_object_or_404(Player, tg_id=new_id)
             referral = get_object_or_404(Player, tg_id=referral_id)
 
+            # Проверяем, что игрок новый, если нет - ошибка
+            if not new_player.is_new:
+                return Response({"Error": "Этот игрок уже существует в системе."},
+                                status=status.HTTP_400_BAD_REQUEST)
+
             info1_exists = ReferralSystem.objects.filter(referral=referral, new_player=new_player).exists()
             info2_exists = ReferralSystem.objects.filter(referral=new_player, new_player=referral).exists()
 
@@ -275,6 +280,7 @@ class CompleteReferralSystem(APIView):
                                 status=status.HTTP_400_BAD_REQUEST)
             else:
                 ReferralSystem.objects.create(referral=referral, new_player=new_player)
+                new_player.is_new = False
                 return Response({'success': 'Перейдите во кладку друзья и заберите бонус'}, status=status.HTTP_200_OK)
 
 
@@ -531,7 +537,7 @@ class CheckSubscriptionView(APIView):
             task_tg_channel.start_time = None
             task_tg_channel.save()
             player.coin += 5000
-            player.save()
+            player.save(update_fields=['coin'])
             message = f"Пользователь подписан на канал."
             return Response({"message": message}, status=status.HTTP_200_OK)
         else:
@@ -571,7 +577,7 @@ class CheckSubscriptionView2(APIView):
             task_tg_group.start_time = None
             task_tg_group.save()
             player.coin += 5000
-            player.save()
+            player.save(update_fields=['coin'])
             message = f"Пользователь подписан на группу."
             return Response({"message": message}, status=status.HTTP_200_OK)
         else:
@@ -586,3 +592,39 @@ class InstructionUserView(APIView):
         player.show_instruction = False
         player.save()
         return Response({"message": "Пользователь ознакомился с инструкцией."},status=status.HTTP_200_OK)
+
+
+class TaskAddFriend(APIView):
+    def post(self, request):
+        player_tg_id = request.data.get('player_tg_id')
+        if not player_tg_id:
+            return Response({"error": "Telegram ID пользователя не указан."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            player = Player.objects.get(tg_id=player_tg_id)
+        except Player.DoesNotExist:
+            return Response({"error": "Игрок с таким Telegram ID не найден."}, status=status.HTTP_404_NOT_FOUND)
+        # Получите TaskPlayer по его id
+        try:
+            add_friend = TaskPlayer.objects.get(id=5)
+        except TaskPlayer.DoesNotExist:
+            return Response({"error": "Задача игрока с указанным ID не найден."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Получите PlayerTask для конкретного игрока и задачи
+        try:
+            task_add_friend = PlayerTask.objects.get(player=player, task=add_friend)
+        except PlayerTask.DoesNotExist:
+            return Response({"error": "PlayerTask для этого игрока и задачи не найден."},
+                            status=status.HTTP_404_NOT_FOUND)
+        referrals = ReferralSystem.objects.filter(referral=player).count()
+        if referrals >= 1:
+            task_add_friend.completed = True
+            task_add_friend.start_time = None
+            task_add_friend.save()
+            player.crystal += 10
+            player.save(update_fields=['crystal'])
+            return Response({"message": "Пользователь добавил друга, который перешёл по ссылке."},
+                            status=status.HTTP_200_OK)
+        else:
+            return Response({"message": "Пользователь не добавил друзей."},
+                            status=status.HTTP_200_OK)
