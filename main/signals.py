@@ -118,11 +118,11 @@ def check_task_completion(sender, instance, **kwargs):
             if completed_tasks_count >= 4:
                 player.tasks = True
                 player.save()
-            # Проверка, достиг ли кто-то из приглашённых игроков уровня 2
-            referrals = ReferralSystem.objects.filter(referral=player)
-            for referral in referrals:
-                if referral.new_player.lvl >= 2:
-                    player.friend_lvl_2 = True
-                    player.boxes_available = True
-                    player.save()
-                    break
+            # # Проверка, достиг ли кто-то из приглашённых игроков уровня 2
+            # referrals = ReferralSystem.objects.filter(referral=player)
+            # for referral in referrals:
+            #     if referral.new_player.lvl >= 2:
+            #         player.friend_lvl_2 = True
+            #         player.boxes_available = True
+            #         player.save()
+            #         break
