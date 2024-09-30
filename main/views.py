@@ -24,7 +24,8 @@ class Main_info(APIView):
         current_bonus = None
         if player.upgrade.flag_autobot:
             # Вычисляем текущий бонус на основе damage и autobot_time
-            current_bonus = player.upgrade.autobot_time * player.upgrade.damage + player.upgrade.coin_bonus_result
+            current_bonus_2 = player.upgrade.autobot_time * player.upgrade.damage + player.upgrade.coin_bonus_result
+            current_bonus = current_bonus_2
         # Получаем активный скин игрока
         active_skin = PlayerSkin.objects.filter(player=player, is_active=True).first()
         active_skin_id = active_skin.skin.id if active_skin else None
@@ -185,7 +186,7 @@ class Open_Box(APIView):
         free_open = request.data.get('free_open', False)  # значение по умолчанию, если не пришло в теле
         box = get_object_or_404(Box, name=name)
         result = []
-        prize_count = {'Bronze': 3, 'Silver': 4, 'Gold': 5}.get(name, 0)
+        prize_count = {'Bronze': 1, 'Silver': 2, 'Gold': 3}.get(name, 0)
         if box.name == 'Bronze':
             if not free_open and player.coin < player.price_bronze_case:
                 return Response({'Error': 'Недостаточно средств'}, status=status.HTTP_400_BAD_REQUEST)
@@ -212,21 +213,23 @@ class Open_Box(APIView):
         else:
             return Response({'Error': 'Неправильные переданы даныне'}, status=status.HTTP_400_BAD_REQUEST)
 
-        for _ in range(prize_count):
-            rand = random.uniform(0, 100)
-            summ_chance = 0
-            for prize in prizes:
-                summ_chance += prize.chance
-                if rand <= summ_chance:
-                    if prize.name == 'Skin' and 'Skin' in [p['prize_name'] for p in result]:
-                        continue  # Пропускаем добавление второго приза с именем "Skin"
-                    result.append({
-                        'prize_id': prize.id,
-                        'prize_name': prize.name,
-                        'prize_count': prize.count,
-                        'prize_chance': prize.chance
-                    })
-                    break
+        # Подготовка шансов для случайного выбора
+        prize_weights = [prize.chance for prize in prizes]
+
+        # Выбираем случайные призы на основе шансов
+        selected_prizes = random.choices(prizes, weights=prize_weights, k=prize_count)
+
+        # Обрабатываем выбранные призы и добавляем их в результат
+        for prize in selected_prizes:
+            if prize.name == 'Skin' and 'Skin' in [p['prize_name'] for p in result]:
+                continue  # Пропускаем добавление второго приза с именем "Skin"
+            result.append({
+                'prize_id': prize.id,
+                'prize_name': prize.name,
+                'prize_count': prize.count,
+                'prize_chance': prize.chance
+            })
+
         player.save()
         return Response(result)
 
