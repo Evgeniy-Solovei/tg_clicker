@@ -21,11 +21,20 @@ class Main_info(APIView):
             player = Player.objects.create(tg_id=tg_id, name=name, is_new=True)
             Upgrade.objects.create(player=player)
 
-        # Вычисляем текущий бонус на основе damage и autobot_time
-        current_bonus = player.upgrade.autobot_time * player.upgrade.damage + player.upgrade.coin_bonus_result
+        current_bonus = None
+        if player.upgrade.flag_autobot:
+            # Вычисляем текущий бонус на основе damage и autobot_time
+            current_bonus = player.upgrade.autobot_time * player.upgrade.damage + player.upgrade.coin_bonus_result
         # Получаем активный скин игрока
         active_skin = PlayerSkin.objects.filter(player=player, is_active=True).first()
         active_skin_id = active_skin.skin.id if active_skin else None
+
+        # Проверяем уровень друзей
+        referrals = ReferralSystem.objects.filter(referral=player)
+        player.friend_lvl_2 = any(referral.new_player.lvl >= 2 for referral in referrals)
+
+        # Устанавливаем доступ к boxes_available
+        player.boxes_available = player.tasks and player.friend_lvl_2
 
         info = {"lvl": player.lvl,
                 "coin": player.coin,
@@ -45,7 +54,7 @@ class Main_info(APIView):
                 "tasks": player.tasks,
                 "friend_lvl_2": player.friend_lvl_2,
                 }
-
+        player.save()
         return Response(info, status=status.HTTP_200_OK)
 
 
@@ -176,7 +185,7 @@ class Open_Box(APIView):
         free_open = request.data.get('free_open', False)  # значение по умолчанию, если не пришло в теле
         box = get_object_or_404(Box, name=name)
         result = []
-        prize_count = {'Bronze': 1, 'Silver': 2, 'Gold': 3}.get(name, 0)
+        prize_count = {'Bronze': 3, 'Silver': 4, 'Gold': 5}.get(name, 0)
         if box.name == 'Bronze':
             if not free_open and player.coin < player.price_bronze_case:
                 return Response({'Error': 'Недостаточно средств'}, status=status.HTTP_400_BAD_REQUEST)
@@ -250,9 +259,13 @@ class Take_And_Apply_Bonus(APIView):
             elif prize_name == "Dimonds":
                 player.crystal += prize_count
             elif prize_name == "Skin":
-                if not Skin.objects.filter(player=player, id_prize=prize.get('prize_id')).exists():
-                    prize_instance = Prize.objects.get(id=prize.get('prize_id'))
-                    Skin.objects.create(player=player, prize=prize_instance, id_prize=prize.get('prize_id'))
+                skin_instance = Skin.objects.get(id_prize=prize.get('prize_id'))  # Получаем сам скин
+                # Проверяем, есть ли связь игрока с этим скином в PlayerSkin
+                player_skin, _ = PlayerSkin.objects.get_or_create(player=player, skin=skin_instance)
+                # Делаем скин доступным, если он еще не доступен
+                if not player_skin.available_skin:
+                    player_skin.available_skin = True
+                    player_skin.save()
 
         player.save()
         player.upgrade.save()
