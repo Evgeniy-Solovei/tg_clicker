@@ -31,10 +31,10 @@ class Main_info(APIView):
 
         # Проверяем уровень друзей
         referrals = ReferralSystem.objects.filter(referral=player)
-        friend_lvl_2 = any(referral.new_player.lvl >= 2 for referral in referrals)
+        player.friend_lvl_2 = any(referral.new_player.lvl >= 2 for referral in referrals)
 
         # Устанавливаем доступ к boxes_available
-        player.boxes_available = player.tasks and friend_lvl_2
+        player.boxes_available = player.tasks and player.friend_lvl_2
 
         info = {"lvl": player.lvl,
                 "coin": player.coin,
@@ -54,7 +54,7 @@ class Main_info(APIView):
                 "tasks": player.tasks,
                 "friend_lvl_2": player.friend_lvl_2,
                 }
-
+        player.save()
         return Response(info, status=status.HTTP_200_OK)
 
 
