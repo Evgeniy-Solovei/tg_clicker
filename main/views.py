@@ -21,7 +21,7 @@ class Main_info(APIView):
             player = Player.objects.create(tg_id=tg_id, name=name, is_new=True)
             Upgrade.objects.create(player=player)
 
-        current_bonus = None
+        # current_bonus = None
         if player.upgrade.flag_autobot:
             # Вычисляем текущий бонус на основе damage и autobot_time
             current_bonus_2 = player.upgrade.autobot_time * player.upgrade.damage + player.upgrade.coin_bonus_result
